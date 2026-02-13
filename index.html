@@ -47,7 +47,7 @@
 
         .header-top {
             display: grid;
-            grid-template-columns: 60px 1fr 110px;
+            grid-template-columns: 60px 1fr 60px;
             align-items: center;
             margin-bottom: 10px;
         }
@@ -65,16 +65,6 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 20px; cursor: pointer; justify-self: end;
         }
-        .header-actions { display:flex; gap:8px; justify-self:end; align-items:center; }
-
-        .header-btn-clear {
-            background: rgba(215,15,39,0.2); border: 1px solid rgba(215,15,39,0.45);
-            color: white; border-radius: 8px; width: 40px; height: 40px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; cursor: pointer; justify-self: end;
-        }
-        .header-btn-clear:active { transform: scale(0.95); }
-
 
         /* --- TABS --- */
         .tabs { display: flex; gap: 20px; justify-content: center; }
@@ -228,21 +218,10 @@
         <div class="header-top">
             <img src="image_56df08.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
             <h1>INVENTARIO</h1>
-            <div class="header-actions">
-            <button class="header-btn-upload" onclick="document.getElementById('csv-file').click()" title="Cargar Maestro">
+            <button class="header-btn-upload" onclick="openMasterPicker()" title="Cargar Maestro">
                 <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             </button>
-            <button class="header-btn-clear" onclick="clearMaster(true)" title="Borrar Maestro">
-                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                    <path d="M10 11v6"></path>
-                    <path d="M14 11v6"></path>
-                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-                </svg>
-            </button>
             <input type="file" id="csv-file" accept=".csv" onchange="processMasterFile(this)">
-        </div>
         </div>
         
         <div class="tabs">
@@ -271,7 +250,7 @@
                 </div>
                 <div>
                     <label>Zona (Prefijo)</label>
-                    <input type="text" id="zone-filter" placeholder="Ej: A1" maxlength="3" style="text-transform:uppercase;">
+                    <input type="text" id="zone-filter" placeholder="Ej: 5AJ" maxlength="3" style="text-transform:uppercase;">
                 </div>
             </div>
             <!-- Rango de Intrusos con Bloqueo -->
@@ -400,7 +379,7 @@
     <script>
         // --- CONFIGURACIÓN ---
         const ADMIN_PASSWORD = "cargo123";
-        const EMAIL_RECIPIENTS = "lvilla@grupocargo.com,falvarado@grupocargo.com";
+        const EMAIL_RECIPIENTS = "lvilla@grupocargo.com,falvarado@grupocargo.com;luciano.villa-extern@renault.com;julieta.diaz@renault.com";
 
         // --- ESTADO ---
         let masterData = new Map();
@@ -417,6 +396,20 @@
         let currentIntruderData = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Mantener presionado el botón de carga (1.2s) para BORRAR maestro (sin borrar historial)
+            const uploadBtn = document.querySelector('.header-btn-upload');
+            if (uploadBtn) {
+                let pressTimer = null;
+                const startPress = () => { pressTimer = setTimeout(() => { clearMaster(); playSound('error'); alert('Maestro borrado.'); }, 1200); };
+                const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
+                uploadBtn.addEventListener('touchstart', startPress, {passive:true});
+                uploadBtn.addEventListener('touchend', cancelPress);
+                uploadBtn.addEventListener('touchmove', cancelPress);
+                uploadBtn.addEventListener('mousedown', startPress);
+                uploadBtn.addEventListener('mouseup', cancelPress);
+                uploadBtn.addEventListener('mouseleave', cancelPress);
+            }
+
             renderTable();
             checkBarcodeSupport();
             loadIntruderConfig(); 
@@ -777,6 +770,23 @@
                 }
             });
         }
+        // --- MAESTRO ---
+        function openMasterPicker() {
+            const el = document.getElementById('csv-file');
+            // Permite volver a seleccionar el MISMO archivo (Chrome/Android a veces no dispara onchange si es el mismo)
+            el.value = '';
+            el.click();
+        }
+
+        function clearMaster() {
+            masterData.clear();
+            MASTER_CODES.clear();
+            document.getElementById(\'master-alert-box\').style.display = \'flex\';
+            document.getElementById(\'master-success-box\').style.display = \'none\';
+            document.getElementById(\'master-info-text\').innerText = \'Maestro no cargado.\';
+        }
+
+
 
         // --- MAESTRO ---
         function processMasterFile(input) {
@@ -818,34 +828,13 @@
                 document.getElementById('master-alert-box').style.display = 'none';
                 document.getElementById('master-success-box').style.display = 'flex';
                 document.getElementById('master-info-text').innerText = `Maestro cargado: ${count} registros.`;
+                input.value = '';
                 playSound('success');
             };
             reader.readAsText(file, 'ISO-8859-1');
         }
 
-        
-        // --- BORRAR MAESTRO (PERSISTENCIA CONTROLADA) ---
-        function clearMaster(ask = true) {
-            if (ask) {
-                const ok = confirm("¿Borrar el maestro cargado?
-
-Esto NO borra el historial.
-Luego deberá volver a cargar el CSV para validar ubicaciones/materiales.");
-                if (!ok) return;
-            }
-            masterData.clear();
-            MASTER_CODES.clear();
-            try { localStorage.removeItem('inv_master_data_v26'); } catch {}
-            const fileInput = document.getElementById('csv-file');
-            if (fileInput) fileInput.value = "";
-            // UI
-            document.getElementById('master-success-box').style.display = 'none';
-            document.getElementById('master-alert-box').style.display = 'flex';
-            document.getElementById('master-info-text').innerText = "Maestro cargado correctamente.";
-            playSound('beep');
-        }
-
-// --- MATCHING (ROBUSTO) ---
+        // --- MATCHING (ROBUSTO) ---
         function normalizeCode(str) {
             if (str === null || str === undefined) return "";
             return String(str)
