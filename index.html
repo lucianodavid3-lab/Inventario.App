@@ -218,9 +218,9 @@
         <div class="header-top">
             <img src="image_56df08.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
             <h1>INVENTARIO</h1>
-            <button class="header-btn-upload" onclick="openMasterPicker()" title="Cargar Maestro">
+            <label class="header-btn-upload" for="csv-file" title="Cargar Maestro">
                 <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            </button>
+            </label>
             <input type="file" id="csv-file" accept=".csv" onchange="processMasterFile(this)">
         </div>
         
@@ -250,7 +250,7 @@
                 </div>
                 <div>
                     <label>Zona (Prefijo)</label>
-                    <input type="text" id="zone-filter" placeholder="Ej: 5AJ" maxlength="3" style="text-transform:uppercase;">
+                    <input type="text" id="zone-filter" placeholder="Ej: A1" maxlength="3" style="text-transform:uppercase;">
                 </div>
             </div>
             <!-- Rango de Intrusos con Bloqueo -->
@@ -379,7 +379,7 @@
     <script>
         // --- CONFIGURACIÓN ---
         const ADMIN_PASSWORD = "cargo123";
-        const EMAIL_RECIPIENTS = "lvilla@grupocargo.com,falvarado@grupocargo.com;luciano.villa-extern@renault.com;julieta.diaz@renault.com";
+        const EMAIL_RECIPIENTS = "lvilla@grupocargo.com,falvarado@grupocargo.com";
 
         // --- ESTADO ---
         let masterData = new Map();
@@ -396,6 +396,10 @@
         let currentIntruderData = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Permite volver a seleccionar el MISMO archivo maestro (si no se limpia, a veces no dispara onchange)
+            const csvInput = document.getElementById('csv-file');
+            if (csvInput) csvInput.addEventListener('click', () => { csvInput.value = ''; });
+
             // Mantener presionado el botón de carga (1.2s) para BORRAR maestro (sin borrar historial)
             const uploadBtn = document.querySelector('.header-btn-upload');
             if (uploadBtn) {
