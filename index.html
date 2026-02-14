@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0D2334">
-    <title>InventarioApp - V27 (Multi-Formato)</title>
+    <title>Inventario Pro - Nube Final</title>
     <style>
         /* --- IDENTIDAD VISUAL --- */
         :root {
@@ -213,15 +213,13 @@
 </head>
 <body>
 
-    <!-- CABECERA -->
     <header>
         <div class="header-top">
             <img src="image_56df08.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
             <h1>INVENTARIO</h1>
-            <label class="header-btn-upload" for="csv-file" title="Cargar Maestro">
-                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            </label>
-            <input type="file" id="csv-file" accept=".csv" onchange="processMasterFile(this)">
+            <button class="header-btn-upload" id="btn-cloud-master" onclick="downloadMasterFromCloud()" title="Descargar Maestro Nube">
+                ☁️
+            </button>
         </div>
         
         <div class="tabs">
@@ -230,12 +228,11 @@
         </div>
     </header>
 
-    <!-- VISTA 1: CONTEO -->
     <div id="view-conteo" class="view active container">
         
         <div id="master-alert-box" class="master-alert">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            <div><strong>ATENCIÓN:</strong> Carga el archivo maestro (5 cols) para comenzar.</div>
+            <div><strong>ATENCIÓN:</strong> Toca la nube (☁️) para bajar el maestro.</div>
         </div>
         <div id="master-success-box" class="master-alert" style="display:none; background:#DCFCE7; border-color:#86EFAC; color:#166534;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -253,7 +250,6 @@
                     <input type="text" id="zone-filter" placeholder="Ej: A1" maxlength="3" style="text-transform:uppercase;">
                 </div>
             </div>
-            <!-- Rango de Intrusos con Bloqueo -->
             <label style="margin-top:10px;">CONFIGURACIÓN INTRUSOS</label>
             <div style="display:grid; grid-template-columns: 1fr 1fr 80px; gap:8px; align-items:end; margin-bottom:0;">
                 <div>
@@ -272,14 +268,12 @@
             </div>
         </div>
 
-        <!-- CÁMARA VIDEO -->
         <div id="camera-container">
             <video id="video" playsinline muted autoplay></video>
             <div class="camera-overlay">APUNTE AL CÓDIGO</div>
             <button onclick="stopCamera()" style="position: absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); border:none; color:white; width:30px; height:30px; border-radius:50%; font-weight:bold;">✕</button>
         </div>
 
-        <!-- INPUT OCULTO PARA FALLBACK DE CÁMARA (FOTO) -->
         <input type="file" id="scan-fallback" accept="image/*" capture="environment" hidden>
 
         <div class="card">
@@ -311,7 +305,6 @@
         </div>
     </div>
 
-    <!-- VISTA 2: HISTORIAL -->
     <div id="view-historial" class="view container">
         <div class="card" style="display:flex; flex-direction:column; gap:10px;">
             <span style="font-size:12px; font-weight:bold; color:var(--text-muted);">Acciones Globales</span>
@@ -327,7 +320,6 @@
                 <table id="records-table">
                     <thead>
                         <tr>
-                            <!-- TEÓRICO ELIMINADO DE LA VISTA -->
                             <th>Fecha</th>
                             <th>Ubicación</th>
                             <th>Material</th>
@@ -344,20 +336,17 @@
         </div>
     </div>
 
-    <!-- MODAL DE ALERTA GENERAL -->
     <div id="modal-overlay">
         <div class="modal-box" id="modal-box">
             <div id="modal-icon" style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
             <div class="modal-title" id="modal-title">Atención</div>
             <div class="modal-msg" id="modal-msg">Mensaje de alerta</div>
             <button class="modal-btn danger" id="modal-confirm-btn">Confirmar</button>
-            <!-- Botón Intruso oculto por defecto -->
             <button class="modal-btn intruder" id="modal-intruder-btn" style="display:none;">REGISTRAR INTRUSO</button>
             <button class="modal-btn cancel" onclick="closeModal()">Cancelar</button>
         </div>
     </div>
 
-    <!-- MODAL ESPECÍFICO PARA INTRUSO -->
     <div id="intruder-modal-overlay">
         <div class="modal-box">
             <div class="modal-title">REGISTRAR INTRUSO</div>
@@ -374,50 +363,60 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/@zxing/library@0.20.0"></script>
+    <script type="module">
+        // --- 1. IMPORTACIONES DE FIREBASE ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-storage.js";
 
-    <script>
-        // --- CONFIGURACIÓN ---
+        // --- 2. CREDENCIALES DE TU PROYECTO ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDI2_dfJ5WBgCoddHPaXg40yrxEZqB4ZXI",
+            authDomain: "inventarioapp-cddbe.firebaseapp.com",
+            projectId: "inventarioapp-cddbe",
+            storageBucket: "inventarioapp-cddbe.firebasestorage.app",
+            messagingSenderId: "1091506863615",
+            appId: "1:1091506863615:web:8b3f1fff3bca138b337bca"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app); // Encendemos el disco duro en la nube
+
+        // --- 3. EXPOSICIÓN GLOBAL (NECESARIO PARA EL HTML) ---
+        window.switchView = switchView;
+        window.downloadMasterFromCloud = downloadMasterFromCloud;
+        window.toggleRangeLock = toggleRangeLock;
+        window.startCamera = startCamera;
+        window.stopCamera = stopCamera;
+        window.clearForm = clearForm;
+        window.validateAndSave = validateAndSave;
+        window.exportCSV = exportCSV;
+        window.sendByEmail = sendByEmail;
+        window.resetAllProtected = resetAllProtected;
+        window.closeModal = closeModal;
+        window.closeIntruderModal = closeIntruderModal;
+
+        // --- 4. CONFIGURACIONES GENERALES ---
         const ADMIN_PASSWORD = "cargo123";
         const EMAIL_RECIPIENTS = "lvilla@grupocargo.com,falvarado@grupocargo.com";
 
-        // --- ESTADO ---
         let masterData = new Map();
         let MASTER_CODES = new Set(); 
         
-        let records = JSON.parse(localStorage.getItem('inv_data_v26')) || [];
-        let intruderConfig = JSON.parse(localStorage.getItem('inv_config_v26')) || { start: 1, end: 300, locked: false };
+        let records = []; 
+        let intruderConfig = JSON.parse(localStorage.getItem('inv_config_v30')) || { start: 1, end: 300, locked: false };
 
         let scanningTarget = null;
         let barcodeDetector = null;
-        let zxingReader = null;
         let pendingSaveData = null;
         let forcePhotoFallback = false; 
         let currentIntruderData = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Permite volver a seleccionar el MISMO archivo maestro (si no se limpia, a veces no dispara onchange)
-            const csvInput = document.getElementById('csv-file');
-            if (csvInput) csvInput.addEventListener('click', () => { csvInput.value = ''; });
-
-            // Mantener presionado el botón de carga (1.2s) para BORRAR maestro (sin borrar historial)
-            const uploadBtn = document.querySelector('.header-btn-upload');
-            if (uploadBtn) {
-                let pressTimer = null;
-                const startPress = () => { pressTimer = setTimeout(() => { clearMaster(); playSound('error'); alert('Maestro borrado.'); }, 1200); };
-                const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
-                uploadBtn.addEventListener('touchstart', startPress, {passive:true});
-                uploadBtn.addEventListener('touchend', cancelPress);
-                uploadBtn.addEventListener('touchmove', cancelPress);
-                uploadBtn.addEventListener('mousedown', startPress);
-                uploadBtn.addEventListener('mouseup', cancelPress);
-                uploadBtn.addEventListener('mouseleave', cancelPress);
-            }
-
-            renderTable();
             checkBarcodeSupport();
             loadIntruderConfig(); 
-            restoreState(); // Restaurar Usuario/Zona y Maestro si existe
+            restoreState(); 
             
             setupAutoAdvance('location', 'material', 'location'); 
             setupAutoAdvance('material', 'qty', 'material');
@@ -430,29 +429,93 @@
             });
             document.getElementById('btn-save-intruder').addEventListener('click', confirmIntruderSave);
 
-            // Listeners para persistencia de campos
             document.getElementById('user').addEventListener('input', saveState);
             document.getElementById('zone-filter').addEventListener('input', saveState);
+
+            // --- RADAR DE FIREBASE EN TIEMPO REAL ---
+            onSnapshot(collection(db, "conteos"), (snapshot) => {
+                records = []; 
+                snapshot.forEach((documento) => {
+                    records.push({ firebaseId: documento.id, ...documento.data() });
+                });
+                
+                records.sort((a, b) => b.id - a.id); 
+                renderTable(); 
+            });
         });
 
-        // --- PERSISTENCIA (NUEVO V26) ---
+        // --- 5. LECTURA DE MAESTRO DESDE LA NUBE ---
+        async function downloadMasterFromCloud() {
+            const btn = document.getElementById('btn-cloud-master');
+            btn.innerHTML = "⏳"; 
+            
+            try {
+                // Va a buscar exactamente este archivo a Firebase Storage
+                const masterRef = ref(storage, 'maestro.csv');
+                const url = await getDownloadURL(masterRef);
+                
+                const response = await fetch(url);
+                const text = await response.text();
+                
+                const lines = text.split(/\r\n|\n/);
+                masterData.clear();
+                MASTER_CODES.clear();
+                let count = 0;
+                const sep = lines[0].indexOf(';') > -1 ? ';' : ',';
+                
+                lines.forEach(l => {
+                    const c = l.split(sep).map(x => x.trim().replace(/^"|"$/g, '').toUpperCase());
+                    if (c.length >= 3 && c[0]) {
+                        const matCode = c[1];
+                        masterData.set(c[0], { 
+                            mat: matCode, 
+                            stock: parseFloat(c[2]) || 0, 
+                            mat9: matCode.substring(0,9), 
+                            storage: c[3] || '',
+                            doc: c[4] || ''
+                        });
+                        MASTER_CODES.add(matCode); 
+                        count++;
+                    }
+                });
+                
+                // Guardamos una copia en el teléfono por si se quedan sin señal
+                try {
+                    const serializedMaster = JSON.stringify(Array.from(masterData.entries()));
+                    localStorage.setItem('inv_master_v30', serializedMaster);
+                } catch (e) {
+                    console.warn("Maestro muy grande para guardar offline", e);
+                }
+
+                document.getElementById('master-alert-box').style.display = 'none';
+                document.getElementById('master-success-box').style.display = 'flex';
+                document.getElementById('master-info-text').innerText = `Maestro Nube: ${count} ítems listos.`;
+                btn.innerHTML = "✅"; 
+                playSound('success');
+
+            } catch (e) {
+                console.error("Error descargando el maestro:", e);
+                alert("No se pudo descargar el maestro de la nube. Revisa tu conexión o asegúrate que el archivo se llame exactamente 'maestro.csv'.");
+                btn.innerHTML = "☁️";
+            }
+        }
+
+        // --- RESTO DE TU LÓGICA (GUARDADO, CÁMARA, VALIDACIONES) ---
         function saveState() {
             const user = document.getElementById('user').value;
             const zone = document.getElementById('zone-filter').value;
-            localStorage.setItem('inv_user_v26', user);
-            localStorage.setItem('inv_zone_v26', zone);
+            localStorage.setItem('inv_user_v30', user);
+            localStorage.setItem('inv_zone_v30', zone);
         }
 
         function restoreState() {
-            // Restaurar inputs
-            const savedUser = localStorage.getItem('inv_user_v26');
+            const savedUser = localStorage.getItem('inv_user_v30');
             if(savedUser) document.getElementById('user').value = savedUser;
 
-            const savedZone = localStorage.getItem('inv_zone_v26');
+            const savedZone = localStorage.getItem('inv_zone_v30');
             if(savedZone) document.getElementById('zone-filter').value = savedZone;
 
-            // Restaurar Maestro
-            const storedMaster = localStorage.getItem('inv_master_data_v26');
+            const storedMaster = localStorage.getItem('inv_master_v30');
             if (storedMaster) {
                 try {
                     const parsedArray = JSON.parse(storedMaster);
@@ -461,18 +524,16 @@
                     for (let [key, val] of masterData) {
                         MASTER_CODES.add(val.mat);
                     }
-                    // Update UI
                     document.getElementById('master-alert-box').style.display = 'none';
                     document.getElementById('master-success-box').style.display = 'flex';
-                    document.getElementById('master-info-text').innerText = `Maestro recuperado: ${masterData.size} registros.`;
+                    document.getElementById('master-info-text').innerText = `Maestro recuperado de caché: ${masterData.size} registros.`;
                 } catch(e) {
                     console.error("Error recuperando maestro", e);
-                    localStorage.removeItem('inv_master_data_v26');
+                    localStorage.removeItem('inv_master_v30');
                 }
             }
         }
 
-        // --- GESTIÓN DE CONFIGURACIÓN INTRUSO (BLOQUEO) ---
         function loadIntruderConfig() {
             document.getElementById('intruder-start').value = intruderConfig.start;
             document.getElementById('intruder-end').value = intruderConfig.end;
@@ -484,7 +545,7 @@
                 const pwd = prompt("🔐 SEGURIDAD\n\nIngrese contraseña para modificar el rango:");
                 if (pwd === ADMIN_PASSWORD) {
                     intruderConfig.locked = false;
-                    localStorage.setItem('inv_config_v26', JSON.stringify(intruderConfig));
+                    localStorage.setItem('inv_config_v30', JSON.stringify(intruderConfig));
                     updateLockUI();
                     alert("Rango desbloqueado.");
                 } else if (pwd !== null) {
@@ -505,7 +566,7 @@
                 intruderConfig.start = start;
                 intruderConfig.end = end;
                 intruderConfig.locked = true;
-                localStorage.setItem('inv_config_v26', JSON.stringify(intruderConfig));
+                localStorage.setItem('inv_config_v30', JSON.stringify(intruderConfig));
                 updateLockUI();
             }
         }
@@ -543,7 +604,6 @@
             return str.replace(/[\x00-\x1F\x7F]/g, "").trim().toUpperCase();
         }
 
-        // --- VALIDACIONES DE FLUJO ---
         function checkLocation() {
             const ubi = cleanString(document.getElementById('location').value);
             if (!ubi) return false;
@@ -580,7 +640,7 @@
 
             const isDuplicate = records.some(r => r.location === ubi);
             if (isDuplicate) {
-                showAlert('Ubicación Duplicada', `La ubicación ${ubi} YA FUE CONTADA.\nPara volver a contarla, elimine primero el registro desde el Historial.`, null, true);
+                showAlert('Ubicación Duplicada', `La ubicación ${ubi} YA FUE CONTADA.`, null, true);
                 playSound('error');
                 document.getElementById('location').classList.add('error-shake');
                 setTimeout(() => document.getElementById('location').classList.remove('error-shake'), 400);
@@ -591,7 +651,6 @@
             return true;
         }
 
-        // --- MANEJO DE INTRUSOS ---
         function handleIntruderRegistration() {
             const start = intruderConfig.locked ? intruderConfig.start : (parseInt(document.getElementById('intruder-start').value) || 1);
             const end = intruderConfig.locked ? intruderConfig.end : (parseInt(document.getElementById('intruder-end').value) || 300);
@@ -607,7 +666,7 @@
             }
             
             if (!found) {
-                alert("No hay ubicaciones INV disponibles en el rango (" + start + "-" + end + ").");
+                alert("No hay ubicaciones INV disponibles.");
                 return;
             }
 
@@ -616,15 +675,29 @@
             const user = cleanString(document.getElementById('user').value);
 
             closeModal(); 
+            
+            let finalMaterial = cleanMat;
+            let globalMatch = null;
+
+            for (let code of MASTER_CODES) {
+                if (findMatchBy9(cleanMat, code)) {
+                    globalMatch = code;
+                    break;
+                }
+            }
+
+            if (globalMatch) {
+                finalMaterial = globalMatch;
+            }
 
             currentIntruderData = {
                 location: found,
-                material: cleanMat,
+                material: finalMaterial, 
                 user: user
             };
 
             document.getElementById('intruder-location-display').innerText = found;
-            document.getElementById('intruder-material-display').innerText = cleanMat;
+            document.getElementById('intruder-material-display').innerText = finalMaterial; 
             document.getElementById('intruder-qty-input').value = '';
             
             document.getElementById('intruder-modal-overlay').style.display = 'flex';
@@ -638,12 +711,10 @@
 
         function confirmIntruderSave() {
             const qtyVal = parseFloat(document.getElementById('intruder-qty-input').value);
-            
             if (isNaN(qtyVal)) {
-                alert("Por favor ingrese una cantidad válida.");
+                alert("Ingrese cantidad válida.");
                 return;
             }
-
             if (!currentIntruderData) return;
 
             const record = {
@@ -661,40 +732,26 @@
                 diff: qtyVal
             };
 
-            records.unshift(record);
-            localStorage.setItem('inv_data_v26', JSON.stringify(records));
-            renderTable();
-
+            saveRecord(record);
             closeIntruderModal();
-            playSound('success'); 
-
             document.getElementById('material').value = '';
             document.getElementById('qty').value = '';
             document.getElementById('material').focus();
         }
 
-        // --- VALIDAR MATERIAL ---
         function verifyMaterialBeforeQty(onSuccess) {
             const ubi = cleanString(document.getElementById('location').value);
-            const rawMat = document.getElementById('material').value;
+            const rawMat = document.getElementById('material').value; 
+            const cleanMat = cleanString(rawMat);
 
-            const scanNorm = normalizeCode(rawMat);
-            if (!scanNorm) return;
+            if (!cleanMat) return; 
 
             if (!ubi) {
-                showAlert('Falta Ubicación', 'Ingrese ubicación antes del material.', null, true);
+                showAlert('Falta Ubicación', 'Ingrese ubicación.', null, true);
                 return;
             }
-
-            // Ubicaciones INV (intrusos): no validamos contra ubicación, pero sí intentamos "corregir" si se puede
+            
             if (ubi.startsWith("INV")) {
-                const resAny = resolveMaterial(rawMat, null, MASTER_CODES);
-                if (resAny.status === "auto" && resAny.corrected) {
-                    document.getElementById('material').value = resAny.corrected;
-                } else if (resAny.status === "ambiguous") {
-                    const chosen = chooseCandidateFromList("Seleccione el material correcto", resAny.candidates);
-                    if (chosen) document.getElementById('material').value = chosen;
-                }
                 onSuccess();
                 return;
             }
@@ -705,47 +762,36 @@
                 return;
             }
 
-            const expectedNorm = normalizeCode(masterRecord.mat);
-            const res = resolveMaterial(rawMat, masterRecord.mat, MASTER_CODES);
+            const matchExpected = findMatchBy9(cleanMat, masterRecord.mat);
 
-            if (res.status === "auto" && normalizeCode(res.corrected) === expectedNorm) {
-                // corregimos campo (por si venía con basura) y seguimos
-                document.getElementById('material').value = res.corrected;
+            if (matchExpected) {
                 onSuccess();
-                return;
-            }
-
-            if (res.status === "ambiguous") {
-                const chosen = chooseCandidateFromList("Coincidencias encontradas - elija una", res.candidates);
-                if (chosen) {
-                    document.getElementById('material').value = chosen;
-
-                    if (normalizeCode(chosen) === expectedNorm) {
-                        onSuccess();
-                        return;
+            } else {
+                let msg = `Material escaneado NO coincide con el esperado.\n\nEsperado: ${masterRecord.mat}`;
+                let globalMatch = null;
+                for (let code of MASTER_CODES) {
+                    if (findMatchBy9(cleanMat, code)) {
+                        globalMatch = code;
+                        break;
                     }
-                    // elegido pero no coincide con esperado -> cae a discrepancia
                 }
-            }
-
-            // Discrepancia: armamos mensaje con "mejor sugerencia" si existe
-            let msg = `El material escaneado NO coincide con el esperado para esta ubicación.\n\nEsperado: ${masterRecord.mat}`;
-            if (res.status === "auto" && res.corrected && normalizeCode(res.corrected) !== expectedNorm) {
-                msg += `\nSugerencia (según maestro): ${res.corrected}`;
-            }
-
-            playSound('error');
-
-            showAlert('Material Inesperado', msg,
-                () => {
-                    closeModal();
-                    onSuccess();
-                },
-                true,
-                () => {
-                    handleIntruderRegistration();
+                if (globalMatch) {
+                    msg += `\n(Nota: Coincide con otro del maestro: ${globalMatch})`;
                 }
-            );
+
+                playSound('error');
+                
+                showAlert('Material Inesperado', msg, 
+                    () => { 
+                        closeModal(); 
+                        onSuccess();
+                    }, 
+                    true,
+                    () => { 
+                        handleIntruderRegistration();
+                    }
+                );
+            }
         }
 
         function setupAutoAdvance(currentId, nextId, validationType) {
@@ -754,9 +800,7 @@
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     if(el.value.trim() !== '') {
-                        
                         playSound('beep');
-
                         if (validationType === 'location') {
                              if (!checkLocation()) return;
                              document.getElementById(nextId).focus();
@@ -774,293 +818,122 @@
                 }
             });
         }
-        // --- MAESTRO ---
-        function openMasterPicker() {
-            const el = document.getElementById('csv-file');
-            // Permite volver a seleccionar el MISMO archivo (Chrome/Android a veces no dispara onchange si es el mismo)
-            el.value = '';
-            el.click();
-        }
 
-        function clearMaster() {
-            masterData.clear();
-            MASTER_CODES.clear();
-            document.getElementById(\'master-alert-box\').style.display = \'flex\';
-            document.getElementById(\'master-success-box\').style.display = \'none\';
-            document.getElementById(\'master-info-text\').innerText = \'Maestro no cargado.\';
-        }
-
-
-
-        // --- MAESTRO ---
-        function processMasterFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const lines = e.target.result.split(/\r\n|\n/);
-                masterData.clear();
-                MASTER_CODES.clear();
-                let count = 0;
-                const sep = lines[0].indexOf(';') > -1 ? ';' : ',';
-                
-                lines.forEach(l => {
-                    const c = l.split(sep).map(x => x.trim().replace(/^"|"$/g, '').toUpperCase());
-                    if (c.length >= 3 && c[0]) {
-                        const matCode = c[1];
-                        masterData.set(c[0], { 
-                            mat: matCode, 
-                            stock: parseFloat(c[2]) || 0, 
-                            mat9: matCode.substring(0,9), 
-                            storage: c[3] || '',
-                            doc: c[4] || ''
-                        });
-                        MASTER_CODES.add(matCode); 
-                        count++;
-                    }
-                });
-                
-                // SAVE MASTER TO LOCAL STORAGE (Persistencia)
-                try {
-                    const serializedMaster = JSON.stringify(Array.from(masterData.entries()));
-                    localStorage.setItem('inv_master_data_v26', serializedMaster);
-                } catch (e) {
-                    console.warn("Maestro muy grande", e);
-                    alert("Aviso: El archivo es muy grande para la memoria local. Si recarga la página, deberá subirlo nuevamente.");
-                }
-
-                document.getElementById('master-alert-box').style.display = 'none';
-                document.getElementById('master-success-box').style.display = 'flex';
-                document.getElementById('master-info-text').innerText = `Maestro cargado: ${count} registros.`;
-                input.value = '';
-                playSound('success');
-            };
-            reader.readAsText(file, 'ISO-8859-1');
-        }
-
-        // --- MATCHING (ROBUSTO) ---
-        function normalizeCode(str) {
-            if (str === null || str === undefined) return "";
-            return String(str)
-                .toUpperCase()
-                .replace(/[\x00-\x1F\x7F]/g, "")     // invisibles/control
-                .replace(/[^A-Z0-9]/g, "")              // solo alfanumérico
-                .trim();
-        }
-
-        function windowExactMatches(scanNorm, masterSet, lengthsDesc) {
-            const hits = new Set();
-            for (const L of lengthsDesc) {
-                if (scanNorm.length < L) continue;
-                for (let i = 0; i <= scanNorm.length - L; i++) {
-                    const part = scanNorm.slice(i, i + L);
-                    if (masterSet.has(part)) hits.add(part);
+        function findMatchBy9(cleanScanned, candidateMaster) {
+            if (cleanScanned.length >= 9 && candidateMaster.length >= 9) {
+                const scanPrefix = cleanScanned.substring(0, 9);
+                const masterPrefix = candidateMaster.substring(0, 9);
+                if (scanPrefix === masterPrefix) {
+                    return candidateMaster;
                 }
             }
-            return Array.from(hits);
+            return null;
         }
 
-        function resolveMaterial(rawScan, expectedCode, masterSet) {
-            const scan = normalizeCode(rawScan);
-            const expected = normalizeCode(expectedCode);
-
-            // Orden de longitudes a buscar (de largo a corto)
-            const lengthsDesc = [20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5];
-
-            // 1) Exact match contra esperado
-            if (scan && expected && scan === expected) {
-                return { status: "auto", corrected: expected, method: "exact_expected", candidates: [] };
-            }
-
-            // 2) Exact match contra maestro
-            if (scan && masterSet.has(scan)) {
-                return { status: "auto", corrected: scan, method: "exact_master", candidates: [] };
-            }
-
-            // 3) Buscar un código completo dentro del scan (por prefijos/sufijos basura)
-            if (scan) {
-                const exactHits = windowExactMatches(scan, masterSet, lengthsDesc);
-                if (exactHits.length === 1) {
-                    return { status: "auto", corrected: exactHits[0], method: "window_exact", candidates: [] };
-                }
-                if (exactHits.length > 1) {
-                    exactHits.sort((a,b) => b.length - a.length);
-                    return { status: "ambiguous", corrected: null, method: "window_exact_ambiguous", candidates: exactHits };
-                }
-            }
-
-            // 4) Fallback por prefijo variable (hasta 9; si scan es 7, usa 7)
-            if (scan) {
-                const k = Math.min(9, scan.length);
-                const MIN_PREFIX = 5; // evita explosión de falsos positivos
-                if (k >= MIN_PREFIX) {
-                    const prefix = scan.slice(0, k);
-                    const prefHits = [];
-                    for (const code of masterSet) {
-                        if (code.startsWith(prefix)) prefHits.push(code);
-                    }
-                    if (prefHits.length === 1) {
-                        return { status: "auto", corrected: prefHits[0], method: `prefix_${k}_unique`, candidates: [] };
-                    }
-                    if (prefHits.length > 1) {
-                        prefHits.sort((a,b) => b.length - a.length);
-                        return { status: "ambiguous", corrected: null, method: `prefix_${k}_ambiguous`, candidates: prefHits };
-                    }
-                }
-            }
-
-            return { status: "none", corrected: null, method: "none", candidates: [] };
-        }
-
-        function chooseCandidateFromList(title, candidates) {
-            if (!candidates || candidates.length === 0) return null;
-            const maxShow = Math.min(15, candidates.length);
-            let msg = `${title}\n\nSe encontraron ${candidates.length} coincidencias.\n\n`;
-            for (let i = 0; i < maxShow; i++) {
-                msg += `${i+1}) ${candidates[i]}\n`;
-            }
-            if (candidates.length > maxShow) msg += `... (+${candidates.length - maxShow} más)\n`;
-            msg += `\nIngrese el número (1-${maxShow}) o Cancelar.`;
-            const pick = prompt(msg);
-            if (pick === null) return null;
-            const n = parseInt(pick, 10);
-            if (!n || n < 1 || n > maxShow) return null;
-            return candidates[n-1];
-        }
-
-        // --- GUARDADO ---
         function validateAndSave() {
             if (masterData.size === 0) {
-                showAlert('Error Crítico', 'Es OBLIGATORIO cargar el maestro.', null, true);
+                showAlert('Error Crítico', 'Descargue el maestro de la nube primero.', null, true);
                 playSound('error');
                 return;
             }
 
             const ubi = cleanString(document.getElementById('location').value);
-            const rawMat = document.getElementById('material').value;
+            const rawMat = document.getElementById('material').value; 
+            const cleanMat = cleanString(rawMat); 
             const qtyStr = document.getElementById('qty').value;
             const qty = parseFloat(qtyStr);
             const user = cleanString(document.getElementById('user').value);
-
+            
             if (!user) {
-                showAlert('Datos Faltantes', 'El nombre de usuario es obligatorio.', null, true);
+                showAlert('Faltan Datos', 'Usuario obligatorio.', null, true);
                 return;
             }
 
-            if (!checkLocation()) return;
+            if (!checkLocation()) return; 
 
             const master = masterData.get(ubi);
-
-            // --- VACÍOS (solo si ubicación está en maestro y no es INV) ---
-            if (master && !normalizeCode(rawMat) && !ubi.startsWith("INV")) {
+            if (master && !cleanMat && !ubi.startsWith("INV")) {
                 const expectedMat = master.mat;
-                const theoretical = master.stock;
-                const zeroQty = 0;
-                const diff = zeroQty - theoretical;
-
-                const msg = `UBICACIÓN VACÍA / MATERIAL FALTANTE\n\nSe registrará el material esperado: ${expectedMat}\nConteo: 0\nDiferencia: ${diff}`;
-
+                const diff = 0 - master.stock;
+                let msg = `UBICACIÓN VACÍA / FALTANTE\n\nSe registrará: ${expectedMat}\nConteo: 0\nDiferencia: ${diff}`;
                 pendingSaveData = {
                     id: Date.now(),
                     date: new Date().toLocaleDateString(),
                     time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
-                    user: user,
-                    location: ubi,
-                    material: expectedMat,
-                    storage: master.storage,
-                    doc: master.doc,
-                    qty: zeroQty,
-                    theoretical: theoretical,
-                    status: 'VACIO',
-                    diff: diff
+                    user: user, location: ubi, material: expectedMat, 
+                    storage: master.storage, doc: master.doc,         
+                    qty: 0, theoretical: master.stock, 
+                    status: 'VACIO', diff: diff
                 };
-
                 showAlert('Confirmar Faltante', msg, confirmSave, true);
                 playSound('error');
                 return;
             }
 
-            // Validación básica de campos
-            if (!normalizeCode(rawMat) || isNaN(qty)) {
-                showAlert('Datos Faltantes', 'Complete todos los campos.', null);
+            if (!cleanMat || isNaN(qty)) {
+                showAlert('Faltan Datos', 'Complete campos.', null);
                 return;
             }
 
-            // --- VARIABLES RESULTADO ---
             let status = 'OK';
             let diff = null;
             let theoretical = null;
-            let finalMaterial = normalizeCode(rawMat);
+            let finalMaterial = cleanMat; 
             let finalStorage = '';
             let finalDoc = '';
-            let isAlert = false;
-            let alertMsg = '';
 
-            // --- INTRUSO UBICACIÓN ---
             if (ubi.startsWith("INV")) {
                 status = 'INTRUSO_UBI';
-
-                // Intento: corregir material si puedo (exacto / ventana / prefijo variable)
-                const resAny = resolveMaterial(rawMat, null, MASTER_CODES);
-                if (resAny.status === "auto" && resAny.corrected) {
-                    finalMaterial = resAny.corrected;
-                } else if (resAny.status === "ambiguous") {
-                    const chosen = chooseCandidateFromList("Seleccione el material correcto", resAny.candidates);
-                    if (chosen) finalMaterial = chosen;
-                } else {
-                    finalMaterial = normalizeCode(rawMat);
+                let globalMatch = null;
+                for (let code of MASTER_CODES) {
+                    if (findMatchBy9(cleanMat, code)) { globalMatch = code; break; }
                 }
-
-                // en intruso no calculamos diff/teórico
-                diff = null;
-                theoretical = null;
-            }
-            // --- UBICACIÓN NO EXISTE EN MAESTRO ---
+                finalMaterial = globalMatch ? globalMatch : cleanMat;
+                diff = null; theoretical = null;
+            } 
             else if (!master) {
                 status = 'ERROR';
                 diff = qty;
-            }
-            // --- UBICACIÓN OK: VALIDAR MATERIAL ---
+            } 
             else {
                 finalStorage = master.storage;
                 finalDoc = master.doc;
+                const matchExpected = findMatchBy9(cleanMat, master.mat); 
 
-                const expected = normalizeCode(master.mat);
-
-                // Resolver (exacto > ventana > prefijo variable)
-                const res = resolveMaterial(rawMat, master.mat, MASTER_CODES);
-
-                // Si quedó ambiguo, pedimos selección
-                if (res.status === "ambiguous") {
-                    const chosen = chooseCandidateFromList("Coincidencias encontradas - elija una", res.candidates);
-                    if (chosen) {
-                        finalMaterial = chosen;
-                    } else {
-                        finalMaterial = normalizeCode(rawMat);
-                    }
-                } else if (res.status === "auto" && res.corrected) {
-                    finalMaterial = res.corrected;
-                } else {
-                    finalMaterial = normalizeCode(rawMat);
-                }
-
-                const finalNorm = normalizeCode(finalMaterial);
-
-                if (finalNorm === expected) {
+                if (matchExpected) {
+                    finalMaterial = matchExpected; 
                     theoretical = master.stock;
                     diff = qty - theoretical;
                     status = 'OK';
                 } else {
                     status = 'INTRUSO_MAT';
-                    theoretical = null;
-                    diff = null;
-
-                    // Mensaje de alerta: esperado + sugerencia si existe
-                    alertMsg = `Material incorrecto.\n\nEsperado: ${master.mat}`;
-                    if (res.status === "auto" && res.corrected && normalizeCode(res.corrected) !== expected) {
-                        alertMsg += `\nSugerencia (según maestro): ${res.corrected}`;
+                    let msg = `Material incorrecto. Esperado: ${master.mat}`;
+                    
+                    let globalMatch = null;
+                    for (let code of MASTER_CODES) {
+                        if (findMatchBy9(cleanMat, code)) { globalMatch = code; break; }
                     }
-                    isAlert = true;
+                    if (globalMatch) msg += `\n(Coincide con: ${globalMatch})`;
+
+                    let materialToSave = globalMatch ? globalMatch : cleanMat;
+
+                    pendingSaveData = {
+                        id: Date.now(),
+                        date: new Date().toLocaleDateString(),
+                        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+                        user: user, location: ubi, 
+                        material: materialToSave, 
+                        storage: finalStorage, doc: finalDoc,         
+                        qty: qty, theoretical: null, status: status, diff: null
+                    };
+
+                    showAlert('Discrepancia', msg + ' ¿Guardar igual?', 
+                        confirmSave, 
+                        true, 
+                        handleIntruderRegistration 
+                    );
+                    playSound('error');
+                    return; 
                 }
             }
 
@@ -1068,49 +941,34 @@
                 id: Date.now(),
                 date: new Date().toLocaleDateString(),
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
-                user: user,
-                location: ubi,
-                material: finalMaterial,
-                storage: finalStorage,
-                doc: finalDoc,
-                qty: qty,
-                theoretical: theoretical,
-                status: status,
-                diff: diff
+                user: user, location: ubi, 
+                material: finalMaterial, 
+                storage: finalStorage, doc: finalDoc,         
+                qty: qty, theoretical: theoretical, 
+                status: status, diff: diff
             };
 
-            // Alertas
-            if (isAlert) {
-                pendingSaveData = record;
-                showAlert('Discrepancia', alertMsg + '\n\n¿Guardar igual?',
-                    confirmSave,
-                    true,
-                    handleIntruderRegistration
-                );
-                playSound('error');
-            } else {
-                saveRecord(record);
-                playSound('success');
-            }
+            saveRecord(record);
         }
-
-        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
         function confirmSave() {
             if (pendingSaveData) {
                 saveRecord(pendingSaveData);
                 pendingSaveData = null;
                 closeModal();
-                playSound('success');
             }
         }
 
-        function saveRecord(record) {
-            records.unshift(record);
-            localStorage.setItem('inv_data_v26', JSON.stringify(records));
-            renderTable();
-            clearForm(true);
-            document.getElementById('location').focus();
+        window.saveRecord = async function(record) {
+            try {
+                await addDoc(collection(db, "conteos"), record);
+                playSound('success');
+                clearForm(true);
+                document.getElementById('location').focus();
+            } catch (e) {
+                console.error("Error al guardar en la nube: ", e);
+                alert("Error de conexión. Revisa tu internet.");
+            }
         }
 
         function clearForm(keepSettings = false) {
@@ -1119,28 +977,26 @@
             document.getElementById('qty').value = '';
         }
 
-        function clearHistory() {
-            records = [];
-            localStorage.removeItem('inv_data_v26');
-            renderTable();
-        }
-
-        window.deleteRecord = function(id) {
-            if(confirm('¿Eliminar esta línea?')) {
-                records = records.filter(r => String(r.id) !== String(id));
-                localStorage.setItem('inv_data_v26', JSON.stringify(records));
-                renderTable();
+        window.deleteRecord = async function(firebaseId) {
+            if(confirm('¿Eliminar esta línea para TODOS los usuarios?')) {
+                try {
+                    await deleteDoc(doc(db, "conteos", firebaseId));
+                } catch(e) {
+                    alert("Error eliminando: " + e);
+                }
             }
         };
 
         function resetAllProtected() {
             if (records.length === 0) return alert("No hay datos para borrar.");
             
-            const pwd = prompt("⚠️ ACCIÓN DESTRUCTIVA ⚠️\n\nIngrese la contraseña de supervisor para borrar todo el historial:");
+            const pwd = prompt("⚠️ ACCIÓN DESTRUCTIVA ⚠️\n\nIngrese la contraseña de supervisor para borrar todo el historial en la nube:");
             
             if (pwd === ADMIN_PASSWORD) {
-                clearHistory();
-                alert("Historial eliminado correctamente.");
+                records.forEach(async (r) => {
+                    await deleteDoc(doc(db, "conteos", r.firebaseId));
+                });
+                alert("Limpieza global iniciada. La tabla se vaciará en unos segundos.");
             } else if (pwd !== null) {
                 alert("Contraseña incorrecta.");
             }
@@ -1148,10 +1004,6 @@
 
         async function sendByEmail() {
             if (records.length === 0) return alert("No hay datos para enviar.");
-            
-            const performClear = () => {
-                clearHistory();
-            };
 
             let csv = "Fecha,Hora,Usuario,Ubicacion,Material,Doc_Inventario,Storage,Stock_Teorico,Stock_Fisico,Diferencia,Estado\n";
             records.forEach(r => csv += `${r.date},${r.time},${r.user},${r.location},${r.material},${r.doc || ''},${r.storage || ''},${r.theoretical !== null ? r.theoretical : ''},${r.qty},${r.diff !== null ? r.diff : ''},${r.status}\n`);
@@ -1165,7 +1017,6 @@
                         text: `Adjunto el reporte de inventario.\n\nPara: ${EMAIL_RECIPIENTS}`,
                         files: [file]
                     });
-                    performClear();
                 } catch (err) {
                     console.log("Compartir cancelado o fallido", err);
                 }
@@ -1173,7 +1024,6 @@
                 exportCSV();
                 const mailtoLink = `mailto:${EMAIL_RECIPIENTS}?subject=Reporte Inventario&body=El archivo CSV ha sido descargado en su dispositivo. Por favor adjúntelo manualmente.`;
                 window.location.href = mailtoLink;
-                setTimeout(performClear, 1000);
             }
         }
 
@@ -1193,7 +1043,7 @@
                     <td style="font-size:12px;">${r.storage || '-'}</td>
                     <td style="text-align:center; font-weight:bold">${r.qty}</td>
                     <td><span class="status-badge ${badgeClass}">${r.status}</span></td>
-                    <td><button class="btn-delete" onclick="deleteRecord('${r.id}')">🗑️</button></td>
+                    <td><button class="btn-delete" onclick="deleteRecord('${r.firebaseId}')">🗑️</button></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1241,38 +1091,15 @@
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `Inv_${Date.now()}.csv`; a.click();
-            clearHistory();
         }
 
         async function checkBarcodeSupport() {
-            try {
-                if ('BarcodeDetector' in window) {
-                    // En algunos Android, pasar 'formats' puede tirar error; si falla, lo creamos sin formatos
-                    try {
-                        barcodeDetector = new BarcodeDetector({ formats: ['code_128', 'code_39', 'code_93', 'codabar', 'ean_13', 'ean_8', 'itf', 'upc_a', 'upc_e', 'qr_code', 'data_matrix', 'pdf417', 'aztec'] });
-                    } catch (e) {
-                        console.warn("BarcodeDetector sin formatos (fallback):", e);
-                        barcodeDetector = new BarcodeDetector();
-                    }
-                }
-            } catch (e) {
-                console.warn("BarcodeDetector no disponible:", e);
-                barcodeDetector = null;
-            }
-
-            try {
-                if (window.ZXing && ZXing.BrowserMultiFormatReader) {
-                    zxingReader = new ZXing.BrowserMultiFormatReader();
-                }
-            } catch (e) {
-                console.warn("ZXing no disponible:", e);
-                zxingReader = null;
-            }
+            if ('BarcodeDetector' in window) barcodeDetector = new BarcodeDetector({ formats: ['code_128', 'code_39', 'ean_13', 'qr_code'] });
         }
 
         async function startCamera(targetId) {
             if (masterData.size === 0) {
-                showAlert('Error', 'Debe cargar el maestro primero.', null, true);
+                showAlert('Error', 'Descargue el maestro de la nube primero.', null, true);
                 return;
             }
             scanningTarget = document.getElementById(targetId);
@@ -1282,7 +1109,7 @@
                 return;
             }
 
-            if (!barcodeDetector && !zxingReader) { 
+            if (!barcodeDetector) { 
                 usePhotoFallback();
                 return; 
             }
@@ -1345,7 +1172,6 @@
 
         function stopCamera() {
             const video = document.getElementById('video');
-            try { if (zxingReader && zxingReader.reset) zxingReader.reset(); } catch(e) {}
             if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
             document.getElementById('camera-container').style.display = 'none';
         }
@@ -1353,50 +1179,23 @@
         async function scanFrame() {
             const video = document.getElementById('video');
             if (document.getElementById('camera-container').style.display === 'none') return;
-
             try {
-                // 1) BarcodeDetector (rápido)
-                if (barcodeDetector) {
-                    const codes = await barcodeDetector.detect(video);
-                    if (codes && codes.length > 0) {
-                        scanningTarget.value = codes[0].rawValue;
-                        stopCamera();
-                        playSound('beep');
-
-                        if (scanningTarget.id === 'location') {
-                            if (!checkLocation()) return;
-                            document.getElementById('material').focus();
-                        } else if (scanningTarget.id === 'material') {
-                            verifyMaterialBeforeQty(() => document.getElementById('qty').focus());
-                        }
-                        return;
+                const codes = await barcodeDetector.detect(video);
+                if (codes.length > 0) {
+                    scanningTarget.value = codes[0].rawValue;
+                    stopCamera();
+                    playSound('beep');
+                    
+                    if (scanningTarget.id === 'location') {
+                        if (!checkLocation()) return; 
+                        document.getElementById('material').focus();
                     }
-                }
-
-                // 2) ZXing fallback (mejor cobertura de simbologías)
-                if (zxingReader) {
-                    // decodeFromVideoElement *no* bloquea la UI: devuelve promesa
-                    const result = await zxingReader.decodeOnceFromVideoElement(video);
-                    if (result && result.getText) {
-                        scanningTarget.value = result.getText();
-                        stopCamera();
-                        playSound('beep');
-
-                        if (scanningTarget.id === 'location') {
-                            if (!checkLocation()) return;
-                            document.getElementById('material').focus();
-                        } else if (scanningTarget.id === 'material') {
-                            verifyMaterialBeforeQty(() => document.getElementById('qty').focus());
-                        }
-                        return;
+                    else if (scanningTarget.id === 'material') {
+                        verifyMaterialBeforeQty(() => document.getElementById('qty').focus());
                     }
-                }
 
-                requestAnimationFrame(scanFrame);
-            } catch (err) {
-                // Si ZXing canceló por stop, ignorar
-                requestAnimationFrame(scanFrame);
-            }
+                } else { requestAnimationFrame(scanFrame); }
+            } catch { requestAnimationFrame(scanFrame); }
         }
 
         function playSound(type) {
