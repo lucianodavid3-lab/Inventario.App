@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0D2334">
-    <title>Inventario Pro - V31 Auth</title>
+    <title>Bienvenido Inventario - Grupo Cargo</title>
     <style>
         :root {
             --navy-main: #0D2334;
@@ -22,148 +22,234 @@
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg-body); color: var(--text-main); margin: 0; padding-bottom: 40px; }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 40px;
+            overflow-x: hidden;
+        }
 
-        /* --- LOGIN SCREEN --- */
+        /* --- PANTALLA DE LOGIN --- */
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--navy-main); display: flex; align-items: center; justify-content: center;
             z-index: 2000; padding: 20px;
         }
         .login-box {
-            background: white; width: 100%; max-width: 350px; border-radius: 16px;
-            padding: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: white; width: 100%; max-width: 360px; border-radius: 20px;
+            padding: 40px 30px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
         }
-        .login-box h2 { color: var(--navy-main); margin-bottom: 25px; font-weight: 800; }
-        
-        /* --- HEADER & TABS --- */
-        header { background-color: var(--navy-main); color: white; padding: 10px 16px 0 16px; position: sticky; top: 0; z-index: 100; }
-        .header-top { display: grid; grid-template-columns: 60px 1fr 60px; align-items: center; margin-bottom: 10px; }
-        .header-logo { height: 35px; background: white; border-radius: 4px; padding: 2px; }
-        h1 { margin: 0; font-size: 18px; text-align: center; }
-        .header-btn-upload { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; width: 40px; height: 40px; cursor: pointer; }
-        .tabs { display: flex; gap: 20px; justify-content: center; }
-        .tab-btn { background: transparent; border: none; color: rgba(255, 255, 255, 0.6); font-size: 14px; padding-bottom: 12px; cursor: pointer; flex: 1; text-align: center; }
-        .tab-btn.active { color: white; font-weight: 700; border-bottom: 4px solid var(--red-accent); }
+        .login-box h2 { color: var(--navy-main); margin-bottom: 30px; font-weight: 800; letter-spacing: -0.5px; }
+        .login-box p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
 
-        /* --- UI COMPONENTS --- */
+        /* --- HEADER --- */
+        header {
+            background-color: var(--navy-main);
+            color: white;
+            padding: 10px 16px 0 16px;
+            box-shadow: 0 4px 12px rgba(13, 35, 52, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-top {
+            display: grid;
+            grid-template-columns: 80px 1fr 60px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.1); border: none; color: white;
+            font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 6px; cursor: pointer;
+        }
+
+        h1 { margin: 0; font-size: 18px; font-weight: 700; text-align: center; }
+
+        .header-btn-upload {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+            color: white; border-radius: 8px; width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; cursor: pointer; justify-self: end;
+        }
+
+        /* --- TABS --- */
+        .tabs { display: flex; gap: 20px; justify-content: center; }
+        .tab-btn {
+            background: transparent; border: none; color: rgba(255, 255, 255, 0.6);
+            font-size: 14px; font-weight: 600; padding-bottom: 12px;
+            cursor: pointer; flex: 1; text-align: center; position: relative;
+        }
+        .tab-btn.active { color: white; font-weight: 800; }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 4px;
+            background-color: var(--red-accent); border-radius: 4px 4px 0 0;
+        }
+
+        /* --- VISTAS --- */
         .container { padding: 16px; max-width: 600px; margin: 0 auto; }
         .view { display: none; }
-        .view.active { display: block; }
-        .card { background: var(--bg-card); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; }
+        .view.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .card {
+            background: var(--bg-card); border-radius: 14px; padding: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px;
+        }
+
+        /* --- INPUTS --- */
         label { display: block; font-size: 11px; font-weight: 700; color: var(--navy-main); margin-bottom: 6px; text-transform: uppercase; }
-        input { width: 100%; padding: 14px; font-size: 16px; border: none; border-radius: 8px; background-color: var(--input-bg); color: var(--input-text); margin-bottom: 15px; }
-        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        input {
+            width: 100%; padding: 14px; font-size: 16px; border: none; border-radius: 10px;
+            background-color: var(--input-bg); color: var(--input-text); margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        input:focus { background-color: #fff; box-shadow: 0 0 0 2px var(--navy-main); }
+        input:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .input-wrapper { position: relative; }
+        .cam-btn {
+            position: absolute; right: 5px; top: 18px; width: 45px; height: 45px;
+            background: var(--navy-main); color: white; border: none; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            font-size: 18px;
+        }
+
+        /* --- BOTONES --- */
+        .btn {
+            width: 100%; padding: 15px; border-radius: 10px; border: none;
+            font-size: 15px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
         .btn-primary { background-color: var(--red-accent); color: white; }
         .btn-secondary { background-color: var(--input-bg); color: var(--navy-main); }
-        .input-action-btn { position: absolute; right: 4px; top: 22px; width: 44px; height: 44px; background: var(--navy-main); color: white; border: none; border-radius: 6px; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn:active { transform: scale(0.98); }
 
         /* --- TABLA --- */
-        .table-wrap { overflow-x: auto; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; }
-        th { background: var(--navy-main); color: white; padding: 10px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #eee; }
-        .status-badge { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; }
-        .bg-ok { background: #DCFCE7; color: #166534; }
-        .bg-err { background: #FEE2E2; color: #991B1B; }
+        .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 750px; }
+        th { background: var(--navy-main); color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; }
+        .badge-ok { background: #DCFCE7; color: #166534; }
 
-        /* --- ADMIN ONLY --- */
+        /* --- CÁMARA --- */
+        #cam-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 3000; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #video { width: 100%; max-height: 70vh; object-fit: cover; }
+
+        /* --- VISIBILIDAD ADMIN --- */
         .adm-only { display: none; }
     </style>
 </head>
 <body>
 
+    <!-- LOGIN -->
     <div id="login-screen">
         <div class="login-box">
-            <h2>INVENTARIO PRO</h2>
+            <h2>GRUPO CARGO</h2>
+            <p>Ingrese sus credenciales de acceso</p>
             <input type="text" id="login-user" placeholder="Nombre de Usuario">
             <input type="password" id="login-pass" placeholder="Contraseña">
-            <button class="btn btn-primary" onclick="loginUsuario()">ENTRAR</button>
+            <button class="btn btn-primary" onclick="handleLogin()">INICIAR SESIÓN</button>
         </div>
     </div>
 
-    <header>
+    <!-- CABECERA -->
+    <header id="main-header" style="display:none">
         <div class="header-top">
-            <button onclick="logout()" style="background:none; border:none; color:white; font-size:12px;">SALIR</button>
-            <h1>INVENTARIO</h1>
-            <button class="header-btn-upload adm-only" id="btn-cloud-master" onclick="downloadMasterFromCloud()">☁️</button>
+            <button class="logout-btn" onclick="handleLogout()">SALIR</button>
+            <h1>Bienvenido Inventario</h1>
+            <button class="header-btn-upload adm-only" id="btn-cloud-master" onclick="downloadMasterFromCloud()" title="Descargar Maestro">☁️</button>
         </div>
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchView('conteo')">CONTEO</button>
-            <button class="tab-btn" onclick="switchView('historial')">HISTORIAL (<span id="count-badge">0</span>)</button>
+            <button class="tab-btn active" id="tab-conteo" onclick="switchView('conteo')">CONTEO</button>
+            <button class="tab-btn" id="tab-historial" onclick="switchView('historial')">HISTORIAL (<span id="count-badge">0</span>)</button>
         </div>
     </header>
 
-    <div id="view-conteo" class="view active container">
+    <!-- VISTA CONTEO -->
+    <div id="view-conteo" class="view container">
         <div class="card">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                 <div>
-                    <label>Usuario Activo</label>
-                    <input type="text" id="user-display" disabled style="background:#f0f0f0; font-weight:bold;">
+                    <label>Usuario</label>
+                    <input type="text" id="user-display" disabled>
                 </div>
                 <div>
                     <label>Zona</label>
-                    <input type="text" id="zone-filter" placeholder="Prefijo">
-                </div>
-            </div>
-            
-            <div class="adm-only">
-                <label>Rango Intrusos</label>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 80px; gap:8px;">
-                    <input type="number" id="intruder-start" value="1">
-                    <input type="number" id="intruder-end" value="300">
-                    <button class="btn btn-navy" onclick="toggleRangeLock()" id="btn-lock-range" style="background:var(--navy-main); color:white; font-size:10px; height:48px;">FIJAR</button>
+                    <input type="text" id="zone" placeholder="Ej: A1" style="text-transform:uppercase">
                 </div>
             </div>
         </div>
 
         <div class="card">
-            <div style="position:relative">
+            <div class="input-wrapper">
                 <label>Ubicación</label>
-                <input type="text" id="location" placeholder="Escanear...">
-                <button class="input-action-btn" onclick="startCamera('location')">📷</button>
+                <input type="text" id="location" placeholder="Escanear ubicación..." style="text-transform:uppercase">
+                <button class="cam-btn" onclick="openCamera('location')">📷</button>
             </div>
-            <div style="position:relative">
+            <div class="input-wrapper">
                 <label>Material</label>
-                <input type="text" id="material" placeholder="Escanear...">
-                <button class="input-action-btn" onclick="startCamera('material')">📷</button>
+                <input type="text" id="material" placeholder="Escanear material..." style="text-transform:uppercase">
+                <button class="cam-btn" onclick="openCamera('material')">📷</button>
             </div>
             <label>Cantidad</label>
             <input type="number" id="qty" placeholder="0" inputmode="numeric">
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <button class="btn btn-secondary" onclick="clearForm()">LIMPIAR</button>
-                <button class="btn btn-primary" onclick="validateAndSave()">GUARDAR</button>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                <button class="btn btn-secondary" onclick="resetForm()">LIMPIAR</button>
+                <button class="btn btn-primary" onclick="saveEntry()">GUARDAR</button>
             </div>
         </div>
     </div>
 
+    <!-- VISTA HISTORIAL -->
     <div id="view-historial" class="view container">
-        <div class="card adm-only" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
-            <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:10px;">CSV</button>
-            <button class="btn btn-secondary" onclick="sendByEmail()" style="font-size:10px;">MAIL</button>
-            <button class="btn btn-primary" onclick="resetAllProtected()" style="font-size:10px; background:var(--danger)">BORRAR</button>
+        <div class="card adm-only" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+            <button class="btn btn-secondary" onclick="exportData()" style="font-size:11px">CSV</button>
+            <button class="btn btn-secondary" onclick="alert('Función de mail lista para configurar')" style="font-size:11px">MAIL</button>
+            <button class="btn btn-danger" onclick="deleteAllRecords()" style="font-size:11px">BORRAR</button>
         </div>
         <div class="card" style="padding:0; overflow:hidden">
             <div class="table-wrap">
                 <table>
                     <thead>
-                        <tr><th>Fecha</th><th>Ubi</th><th>Material</th><th>Cant</th><th>Operario</th><th>Est</th><th></th></tr>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Ubicación</th>
+                            <th>Material</th>
+                            <th>Cant</th>
+                            <th>Usuario</th>
+                            <th>Estado</th>
+                            <th class="adm-only" style="width:50px"></th>
+                        </tr>
                     </thead>
-                    <tbody id="records-body"></tbody>
+                    <tbody id="table-body"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <div id="camera-container" style="display:none; background:black; padding:10px; border-radius:12px; margin:10px;">
-        <video id="video" style="width:100%; border-radius:8px;" playsinline muted autoplay></video>
-        <button onclick="stopCamera()" class="btn btn-primary" style="margin-top:10px;">CERRAR CÁMARA</button>
+    <!-- CÁMARA OVERLAY -->
+    <div id="cam-overlay">
+        <video id="video" playsinline muted autoplay></video>
+        <div style="color:white; margin:20px; font-weight:700">APUNTE AL CÓDIGO</div>
+        <button class="btn btn-primary" onclick="closeCamera()" style="max-width:200px">CANCELAR</button>
     </div>
 
+    <!-- SCRIPTS -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-storage.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 
@@ -181,115 +267,211 @@
         const storage = getStorage(app);
         const auth = getAuth(app);
 
-        // --- AUTH LOGIC ---
-        window.loginUsuario = async () => {
-            const user = document.getElementById('login-user').value;
-            const pass = document.getElementById('login-pass').value;
-            if(!user || !pass) return alert("Complete datos");
-            
-            const email = `${user.toLowerCase()}@tuapp.com`;
+        let records = [];
+        let masterData = new Map();
+        let currentScanningTarget = null;
+        let barcodeDetector = null;
+
+        // --- AUTENTICACIÓN ---
+        window.handleLogin = async () => {
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            if(!user || !pass) return alert("Ingrese usuario y contraseña");
+
+            const email = `${user.toLowerCase()}@grupocargo.com`;
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
             } catch (e) {
-                alert("Usuario o Contraseña incorrectos");
+                alert("Credenciales incorrectas.");
             }
         };
 
-        window.logout = () => signOut(auth);
+        window.handleLogout = () => signOut(auth);
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('user-display').value = user.email.split('@')[0].toUpperCase();
+                document.getElementById('main-header').style.display = 'block';
+                document.getElementById('view-conteo').classList.add('active');
                 
-                // --- PERFIL ADM ---
-                if (user.email === "luciano@tuapp.com") {
-                    document.querySelectorAll('.adm-only').forEach(el => el.style.display = 'grid');
-                    document.getElementById('btn-cloud-master').style.display = 'flex';
-                } else {
-                    document.querySelectorAll('.adm-only').forEach(el => el.style.display = 'none');
-                }
+                const shortName = user.email.split('@')[0].toUpperCase();
+                document.getElementById('user-display').value = shortName;
+
+                // Control Perfil ADM
+                const isAdmin = user.email === "lvilla@grupocargo.com";
+                document.querySelectorAll('.adm-only').forEach(el => el.style.display = isAdmin ? 'grid' : 'none');
+                if(isAdmin) document.getElementById('btn-cloud-master').style.display = 'flex';
+                
+                initRealtimeSync();
             } else {
                 document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('main-header').style.display = 'none';
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             }
         });
 
-        // --- RESTO DE LÓGICA LOGÍSTICA (RECORDS, MASTER, ETC) ---
-        let records = [];
-        let masterData = new Map();
-
-        window.downloadMasterFromCloud = async function() {
+        // --- MAESTRO ---
+        window.downloadMasterFromCloud = async () => {
             const btn = document.getElementById('btn-cloud-master');
             btn.innerHTML = "⏳";
             try {
-                const url = await getDownloadURL(ref(storage, 'maestro.csv'));
+                const fileRef = ref(storage, 'maestro.csv');
+                const url = await getDownloadURL(fileRef);
                 const res = await fetch(url);
                 const text = await res.text();
+                
                 const lines = text.split(/\r\n|\n/);
                 masterData.clear();
-                lines.forEach(l => {
-                    const c = l.split(',').map(x => x.trim().toUpperCase());
+                lines.forEach(line => {
+                    const c = line.split(',').map(x => x.trim().toUpperCase());
                     if(c[0]) masterData.set(c[0], { mat: c[1], stock: parseFloat(c[2]) || 0 });
                 });
+                
                 btn.innerHTML = "✅";
-                alert("Maestro Nube cargado");
-            } catch (e) { alert("Error al bajar maestro"); btn.innerHTML = "☁️"; }
+                alert(`Maestro cargado: ${masterData.size} artículos.`);
+            } catch (e) {
+                alert("Error al bajar maestro de la nube.");
+                btn.innerHTML = "☁️";
+            }
         };
 
-        window.validateAndSave = async () => {
-            const ubi = document.getElementById('location').value.toUpperCase();
-            const mat = document.getElementById('material').value.toUpperCase();
+        // --- LÓGICA DE NEGOCIO ---
+        window.saveEntry = async () => {
+            const ubi = document.getElementById('location').value.trim().toUpperCase();
+            const mat = document.getElementById('material').value.trim().toUpperCase();
             const qty = parseFloat(document.getElementById('qty').value);
             const user = auth.currentUser.email.split('@')[0].toUpperCase();
 
-            if(!ubi || !mat || isNaN(qty)) return alert("Faltan datos");
+            if(!ubi || !mat || isNaN(qty)) return alert("Complete todos los campos.");
 
-            const record = {
-                id: Date.now(),
+            const entry = {
+                timestamp: Date.now(),
                 date: new Date().toLocaleDateString(),
-                user: user,
+                time: new Date().toLocaleTimeString(),
                 location: ubi,
                 material: mat,
                 qty: qty,
+                user: user,
                 status: 'OK'
             };
 
-            await addDoc(collection(db, "conteos"), record);
+            try {
+                await addDoc(collection(db, "conteos"), entry);
+                playTone(800, 0.1);
+                resetForm();
+            } catch (e) { alert("Error al guardar."); }
+        };
+
+        function initRealtimeSync() {
+            onSnapshot(collection(db, "conteos"), (snap) => {
+                records = [];
+                snap.forEach(doc => records.push({ id: doc.id, ...doc.data() }));
+                records.sort((a, b) => b.timestamp - a.timestamp);
+                renderTable();
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            document.getElementById('count-badge').innerText = records.length;
+            const isAdmin = auth.currentUser?.email === "lvilla@grupocargo.com";
+            
+            tbody.innerHTML = records.map(r => `
+                <tr>
+                    <td>${r.date} ${r.time}</td>
+                    <td><b>${r.location}</b></td>
+                    <td>${r.material}</td>
+                    <td>${r.qty}</td>
+                    <td>${r.user}</td>
+                    <td><span class="badge badge-ok">${r.status}</span></td>
+                    ${isAdmin ? `<td><button onclick="deleteRecord('${r.id}')" style="background:none; border:none; cursor:pointer;">🗑️</button></td>` : '<td></td>'}
+                </tr>
+            `).join('');
+        }
+
+        window.deleteRecord = async (id) => {
+            if(confirm("¿Eliminar registro?")) await deleteDoc(doc(db, "conteos", id));
+        };
+
+        window.deleteAllRecords = async () => {
+            if(confirm("⚠️ ¿BORRAR TODO EL HISTORIAL DE LA NUBE? Esta acción no se puede deshacer.")) {
+                for(let r of records) { await deleteDoc(doc(db, "conteos", r.id)); }
+                alert("Historial vaciado.");
+            }
+        };
+
+        // --- UTILIDADES ---
+        window.switchView = (v) => {
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${v}`).classList.add('active');
+            document.getElementById(`tab-${v}`).classList.add('active');
+        };
+
+        window.resetForm = () => {
             document.getElementById('location').value = '';
             document.getElementById('material').value = '';
             document.getElementById('qty').value = '';
             document.getElementById('location').focus();
         };
 
-        onSnapshot(collection(db, "conteos"), (snap) => {
-            records = [];
-            snap.forEach(d => records.push({firebaseId: d.id, ...d.data()}));
-            records.sort((a,b) => b.id - a.id);
-            renderTable();
-        });
+        window.exportData = () => {
+            let csv = "Fecha,Hora,Ubicacion,Material,Cantidad,Usuario\n";
+            records.forEach(r => csv += `${r.date},${r.time},${r.location},${r.material},${r.qty},${r.user}\n`);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `Inventario_Cargo_${Date.now()}.csv`; a.click();
+        };
 
-        function renderTable() {
-            const tbody = document.getElementById('records-body');
-            document.getElementById('count-badge').innerText = records.length;
-            tbody.innerHTML = records.map(r => `
-                <tr>
-                    <td>${r.date}</td>
-                    <td><b>${r.location}</b></td>
-                    <td>${r.material}</td>
-                    <td>${r.qty}</td>
-                    <td>${r.user}</td>
-                    <td><span class="status-badge bg-ok">${r.status}</span></td>
-                    <td>${auth.currentUser.email === "luciano@tuapp.com" ? `<button onclick="deleteRecord('${r.firebaseId}')">🗑️</button>` : ''}</td>
-                </tr>
-            `).join('');
+        // --- CÁMARA ---
+        if ('BarcodeDetector' in window) barcodeDetector = new BarcodeDetector();
+
+        window.openCamera = async (target) => {
+            currentScanningTarget = document.getElementById(target);
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                document.getElementById('cam-overlay').style.display = 'flex';
+                tick();
+            } catch (e) { alert("No se pudo acceder a la cámara."); }
+        };
+
+        window.closeCamera = () => {
+            const video = document.getElementById('video');
+            if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+            document.getElementById('cam-overlay').style.display = 'none';
+        };
+
+        async function tick() {
+            const video = document.getElementById('video');
+            if(document.getElementById('cam-overlay').style.display === 'none') return;
+            if(barcodeDetector && video.readyState === video.HAVE_ENOUGH_DATA) {
+                const codes = await barcodeDetector.detect(video);
+                if(codes.length > 0) {
+                    currentScanningTarget.value = codes[0].rawValue.toUpperCase();
+                    playTone(600, 0.1);
+                    closeCamera();
+                    return;
+                }
+            }
+            requestAnimationFrame(tick);
         }
 
-        window.deleteRecord = async (id) => { if(confirm("¿Borrar?")) await deleteDoc(doc(db, "conteos", id)); };
-        window.switchView = (v) => {
-            document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
-            document.getElementById(`view-${v}`).classList.add('active');
-        };
+        function playTone(freq, dur) {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.connect(g); g.connect(ctx.destination);
+            osc.frequency.value = freq; g.gain.value = 0.1;
+            osc.start(); osc.stop(ctx.currentTime + dur);
+        }
+
+        // Enter advances focus
+        document.getElementById('location').addEventListener('keypress', e => { if(e.key === 'Enter') document.getElementById('material').focus(); });
+        document.getElementById('material').addEventListener('keypress', e => { if(e.key === 'Enter') document.getElementById('qty').focus(); });
+        document.getElementById('qty').addEventListener('keypress', e => { if(e.key === 'Enter') saveEntry(); });
+
     </script>
 </body>
 </html>
