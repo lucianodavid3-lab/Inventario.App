@@ -92,7 +92,7 @@
         .btn-secondary { background-color: var(--input-bg); color: var(--navy-main); }
         .btn-danger-block { background-color: var(--danger); color: white; }
         
-        .btn-lock { background: var(--navy-main); color: white; border: none; border-radius: 8px; width: 100%; height: 100%; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .btn-lock { background: var(--navy-main); color: white; border: none; border-radius: 8px; width: 100%; height: 100%; font-size: 10px; font-weight: bold; cursor: pointer; }
         .btn-lock.locked { background: var(--success); }
 
         /* --- TABLA --- */
@@ -120,6 +120,7 @@
         .modal-btn.danger { background: var(--red-accent); color: white; }
         .modal-btn.intruder { background: var(--warning); color: white; }
         .modal-btn.cancel { background: var(--input-bg); color: var(--navy-main); }
+        .modal-btn.info { background: var(--navy-main); color: white; }
 
         /* --- CÁMARA --- */
         #camera-container { display: none; position: relative; margin-bottom: 10px; border-radius: 12px; overflow: hidden; background: black; border: 3px solid var(--red-accent); }
@@ -148,6 +149,7 @@
         <div class="header-top">
             <button class="logout-btn" onclick="logout()">SALIR</button>
             <h1>Inventario Cargo</h1>
+            <!-- Botón de nube para todos los usuarios -->
             <button class="header-btn-upload" id="btn-cloud-master" onclick="downloadMasterFromCloud()" title="Sincronizar Maestro">☁️</button>
         </div>
         <div class="tabs">
@@ -177,7 +179,7 @@
             </div>
             <div class="adm-only" style="margin-top:5px;">
                 <label>Rango Intrusos</label>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 70px; gap:8px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr 70px; gap:10px;">
                     <input type="number" id="intruder-start" value="1">
                     <input type="number" id="intruder-end" value="300">
                     <button id="btn-lock-range" class="btn-lock" onclick="toggleRangeLock()">🔓 FIJAR</button>
@@ -240,7 +242,8 @@
             <div class="modal-msg" id="modal-msg"></div>
             <button class="modal-btn danger" id="modal-confirm-btn" style="display:none;"></button>
             <button class="modal-btn intruder" id="modal-intruder-btn" style="display:none;">REGISTRAR COMO INTRUSO</button>
-            <button class="modal-btn cancel" onclick="closeModal()">CANCELAR</button>
+            <button class="modal-btn cancel" id="modal-cancel-btn" onclick="closeModal()">CANCELAR</button>
+            <button class="modal-btn info" id="modal-ok-btn" style="display:none;" onclick="closeModal()">ENTENDIDO</button>
         </div>
     </div>
 
@@ -287,7 +290,7 @@
         let barcodeDetector = null;
         let pendingSaveData = null;
         let currentIntruderData = null;
-        let originalPendingLocation = null; // Para rastrear la ubicación después de un intruso
+        let originalPendingLocation = null;
 
         if ('BarcodeDetector' in window) {
             barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
@@ -297,10 +300,10 @@
         window.loginUsuario = async () => {
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
-            if (!user || !pass) return alert("Ingrese credenciales");
+            if (!user || !pass) return showAlert("DATOS INCOMPLETOS", "Por favor ingrese sus credenciales.", null, true);
             const email = user.includes('@') ? user : `${user.toLowerCase()}@grupocargo.com`;
             try { await signInWithEmailAndPassword(auth, email, pass); } 
-            catch (e) { alert("Error de acceso: " + e.code); }
+            catch (e) { showAlert("FALLO DE ACCESO", "Usuario o contraseña incorrectos.", null, true); }
         };
 
         window.logout = () => signOut(auth);
@@ -328,6 +331,8 @@
                 snap.forEach(d => records.push({ firebaseId: d.id, ...d.data() }));
                 records.sort((a, b) => b.id - a.id);
                 renderTable();
+            }, (err) => {
+                console.error("Error sync:", err);
             });
         }
 
@@ -342,8 +347,9 @@
                 processMasterData(text);
                 btn.innerHTML = "✅";
                 playSound('success');
+                showAlert("ÉXITO", "Maestro sincronizado correctamente desde la nube.", null, false);
             } catch (e) {
-                alert("Error al bajar maestro: Asegúrese que el archivo se llame 'maestro.csv' en Storage.");
+                showAlert("ERROR DE MAESTRO", "No se pudo bajar el archivo. Asegúrese de tener internet y que el archivo 'maestro.csv' esté en Storage.", null, true);
                 btn.innerHTML = "☁️";
             }
         };
@@ -421,12 +427,12 @@
                 if (!match) {
                     playSound('error');
                     const expectedList = masterList.map(m => m.mat).join(" o ");
-                    originalPendingLocation = ubi; // Guardamos la ubi original
+                    originalPendingLocation = ubi; 
                     showAlert("MATERIAL INESPERADO", 
                         `El material leído (${mat}) no coincide con lo esperado para esta posición (${expectedList}).\n\n¿Desea registrarlo igual o asignarlo a un hueco de intruso?`, 
-                        onSuccess, // Confirmar guardar igual
+                        onSuccess, 
                         true,
-                        () => handleIntruderRegistration() // Opción intruso
+                        () => handleIntruderRegistration() 
                     );
                     return;
                 }
@@ -435,7 +441,7 @@
         }
 
         window.validateAndSave = async () => {
-            if (masterData.size === 0) return alert("Cargue el maestro primero.");
+            if (masterData.size === 0) return showAlert("MAESTRO REQUERIDO", "Cargue el maestro primero tocando la nube ☁️.", null, true);
             const ubi = document.getElementById('location').value.trim().toUpperCase();
             const mat = document.getElementById('material').value.trim().toUpperCase();
             const qtyStr = document.getElementById('qty').value;
@@ -443,10 +449,9 @@
 
             if (!checkLocation(ubi)) return;
 
-            // CASO: Ubicación Vacía
             if (!mat) {
                 const list = masterData.get(ubi);
-                if (!list) return alert("Ingrese un material.");
+                if (!list) return showAlert("DATOS INCOMPLETOS", "Ingrese un material.", null, true);
                 const mainMat = list[0].mat;
                 const diff = 0 - list[0].stock;
                 pendingSaveData = { 
@@ -461,7 +466,7 @@
                 return;
             }
 
-            if (isNaN(qty)) return alert("Ingrese una cantidad válida.");
+            if (isNaN(qty)) return showAlert("CANTIDAD INVÁLIDA", "Por favor ingrese un número en el campo cantidad.", null, true);
 
             verifyMaterialBeforeQty(() => {
                 let status = 'OK', theoretical = 0, diff = 0, finalMat = mat, st='', dc='';
@@ -495,7 +500,7 @@
                 await addDoc(collection(db, "conteos"), record);
                 playSound('success');
                 clearForm();
-            } catch(e) { alert("Error al conectar con la nube."); }
+            } catch(e) { showAlert("FALLO DE RED", "Error al conectar con la nube. Revise su conexión.", null, true); }
         }
 
         function confirmSave() { if(pendingSaveData) { saveRecord(pendingSaveData); pendingSaveData=null; closeModal(); } }
@@ -510,7 +515,7 @@
                 const cand = "INV" + String(i).padStart(3, '0');
                 if (!records.some(r => r.location === cand)) { found = cand; break; }
             }
-            if (!found) return alert("Sin huecos INV disponibles.");
+            if (!found) return showAlert("SIN UBICACIONES", "No hay ubicaciones INV disponibles en el rango configurado.", null, true);
             
             const mat = document.getElementById('material').value.trim().toUpperCase();
             currentIntruderData = { ubi: found, mat };
@@ -525,7 +530,8 @@
 
         document.getElementById('btn-save-intruder').onclick = async () => {
             const qty = parseFloat(document.getElementById('intruder-qty-input').value);
-            if (isNaN(qty)) return alert("Cantidad inválida");
+            if (isNaN(qty)) return showAlert("ERROR", "Ingrese cantidad válida.", null, true);
+            
             const record = { 
                 id: Date.now(), date: new Date().toLocaleDateString(), 
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
@@ -533,11 +539,10 @@
                 location: currentIntruderData.ubi, material: currentIntruderData.mat, 
                 qty, theoretical: 0, storage: '', doc: 'INTRUSO', status: 'INTRUSO_UBI', diff: qty 
             };
-            await addDoc(collection(db, "conteos"), record);
+            
+            await saveRecord(record);
             playSound('success');
             
-            // LÓGICA DE CONTINUIDAD:
-            // Al terminar el intruso, volvemos a la ubicación original para preguntar qué hay realmente allí
             const nextUbi = originalPendingLocation;
             closeIntruderModal();
             clearForm();
@@ -545,14 +550,14 @@
             if (nextUbi) {
                 document.getElementById('location').value = nextUbi;
                 document.getElementById('material').focus();
-                alert(`Intruso registrado en ${record.location}.\n\nAhora continúe con la ubicación: ${nextUbi}`);
+                // Eliminado alerta popup, ahora es fluido
                 originalPendingLocation = null;
             }
         };
 
         // --- CÁMARA ---
         window.startCamera = async (target) => {
-            if(masterData.size === 0) return alert("Cargue el maestro antes de escanear.");
+            if(masterData.size === 0) return showAlert("CARGUE MAESTRO", "Debe cargar el maestro antes de usar la cámara.", null, true);
             scanningTarget = document.getElementById(target);
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
@@ -600,23 +605,22 @@
 
         // --- ACCIONES ADMINISTRADOR ---
         window.deleteRecord = async (id) => {
-            if(confirm('¿ELIMINAR ESTA LÍNEA DE FORMA PERMANENTE?')) {
-                try { await deleteDoc(doc(db, "conteos", id)); } catch(e) { alert("Error al eliminar."); }
-            }
+            showAlert("¿ELIMINAR?", "Esta acción quitará el registro permanentemente del servidor.", () => {
+                deleteDoc(doc(db, "conteos", id)).catch(() => showAlert("ERROR", "No se pudo eliminar.", null, true));
+            }, true);
         };
 
         window.resetAllProtected = async () => {
-            if(!confirm("⚠️ ADVERTENCIA CRÍTICA ⚠️\n\n¿Está seguro de que desea BORRAR TODO el historial de la nube? Esta acción no se puede deshacer.")) return;
-            const pwd = prompt("Ingrese contraseña de supervisor para confirmar:");
-            if(pwd === "cargo123") {
-                try {
-                    const snap = await getDocs(collection(db, "conteos"));
-                    const batch = writeBatch(db);
-                    snap.forEach(d => batch.delete(d.ref));
-                    await batch.commit();
-                    alert("Base de datos vaciada con éxito.");
-                } catch(e) { alert("Error en el borrado masivo."); }
-            } else if (pwd !== null) { alert("Contraseña incorrecta."); }
+            showAlert("⚠️ ADVERTENCIA CRÍTICA", "¿Seguro que desea BORRAR TODO el historial de la nube? Esta acción es irreversible.", () => {
+                const pwd = prompt("Ingrese contraseña de supervisor para confirmar:");
+                if(pwd === "cargo123") {
+                    getDocs(collection(db, "conteos")).then(snap => {
+                        const batch = writeBatch(db);
+                        snap.forEach(d => batch.delete(d.ref));
+                        batch.commit().then(() => showAlert("COMPLETADO", "La base de datos ha sido vaciada.", null, false));
+                    });
+                } else if (pwd !== null) { showAlert("ERROR", "Contraseña incorrecta.", null, true); }
+            }, true);
         };
 
         window.toggleRangeLock = () => {
@@ -630,7 +634,6 @@
 
         // --- UTILIDADES ---
         function clearForm() { 
-            const ubi = document.getElementById('location').value;
             document.querySelectorAll('.card input').forEach(i => { if(!i.disabled && i.id !== 'zone-filter') i.value = ''; }); 
             document.getElementById('location').focus(); 
         }
@@ -667,7 +670,7 @@
         }
 
         window.exportCSV = () => {
-            if(!records.length) return alert("No hay datos para exportar.");
+            if(!records.length) return showAlert("SIN DATOS", "No hay registros para exportar todavía.", null, false);
             let csv = "Fecha,Hora,Usuario,Ubicacion,Material,Doc_Inventario,Storage,Stock_Teorico,Stock_Fisico,Diferencia,Estado\n";
             records.forEach(r => {
                 csv += `${r.date},${r.time||''},${r.user},${r.location},${r.material},${r.doc||''},${r.storage||''},${r.theoretical??''},${r.qty},${r.diff??''},${r.status}\n`;
@@ -685,20 +688,33 @@
             const box = document.getElementById('modal-box');
             const btnConfirm = document.getElementById('modal-confirm-btn');
             const btnIntruder = document.getElementById('modal-intruder-btn');
+            const btnCancel = document.getElementById('modal-cancel-btn');
+            const btnOk = document.getElementById('modal-ok-btn');
+
             box.className = isError ? 'modal-box error-mode' : 'modal-box';
             document.getElementById('modal-icon').innerText = isError ? '⛔' : '⚠️';
             
-            btnConfirm.style.display = confirmCb ? 'block' : 'none';
-            if(confirmCb) {
-                btnConfirm.innerText = title === "CONFIRMAR VACÍO" ? "SÍ, ESTÁ VACÍA" : "SÍ, GUARDAR IGUAL";
-                btnConfirm.onclick = () => { confirmCb(); closeModal(); };
+            // Si no hay callbacks (es solo info), mostramos botón OK unificado
+            if(!confirmCb && !intruderCb) {
+                btnConfirm.style.display = 'none';
+                btnIntruder.style.display = 'none';
+                btnCancel.style.display = 'none';
+                btnOk.style.display = 'block';
+            } else {
+                btnOk.style.display = 'none';
+                btnCancel.style.display = 'block';
+                btnConfirm.style.display = confirmCb ? 'block' : 'none';
+                if(confirmCb) {
+                    btnConfirm.innerText = title === "CONFIRMAR VACÍO" ? "SÍ, ESTÁ VACÍA" : "SÍ, GUARDAR IGUAL";
+                    btnConfirm.onclick = () => { confirmCb(); closeModal(); };
+                }
+                btnIntruder.style.display = intruderCb ? 'block' : 'none';
+                if(intruderCb) btnIntruder.onclick = intruderCb;
             }
-            
-            btnIntruder.style.display = intruderCb ? 'block' : 'none';
-            if(intruderCb) btnIntruder.onclick = intruderCb;
             
             document.getElementById('modal-overlay').style.display = 'flex';
         }
+
         window.closeModal = () => document.getElementById('modal-overlay').style.display = 'none';
 
         document.getElementById('location').addEventListener('keydown', e => { if(e.key === 'Enter') { if(checkLocation(e.target.value.toUpperCase())) document.getElementById('material').focus(); } });
