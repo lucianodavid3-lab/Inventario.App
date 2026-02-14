@@ -344,7 +344,7 @@
 
         // --- CONFIGURACIÓN DE PROYECTO ---
         const firebaseConfig = {
-            apiKey: "AIzaSyDI2_dfJ5WbGCoddHPaXg40yrxEZqB4ZXI",
+            apiKey: "AIzaSyDI2_dfJ5WbGCoddHPaXg40yrxEZqB4ZXI", // <--- Pégala aquí después de cambiar el proyecto en la consola
             authDomain: "inventarioapp-cddbe.firebaseapp.com",
             projectId: "inventarioapp-cddbe",
             storageBucket: "inventarioapp-cddbe.firebasestorage.app",
@@ -417,11 +417,11 @@
             } catch (e) {
                 console.error("Login Error:", e);
                 if (e.code === 'auth/api-key-not-valid') {
-                    alert("ERROR DE CONFIGURACIÓN:\n\nLa 'API Key' es incorrecta.\nPor favor, busca la clave en Google Cloud > Credenciales (Proyecto: inventarioapp-cddbe) y pégala en el código.");
+                    alert("ERROR DE CONFIGURACIÓN:\n\nClave API rechazada. Asegúrate de haber seleccionado el proyecto 'inventarioapp-cddbe' en Google Cloud y haber quitado las restricciones.");
                 } else if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
-                    alert("Usuario o contraseña incorrectos.");
+                    alert("Usuario o Contraseña incorrectos.");
                 } else {
-                    alert("Error: " + e.code);
+                    alert("Error de acceso: " + e.code); 
                 }
             }
         }
