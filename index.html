@@ -192,7 +192,7 @@
     <header id="main-header" style="display:none;">
         <div class="header-top">
             <button class="logout-btn" onclick="logout()">SALIR</button>
-            <h1>Bienvenido </h1>
+            <h1>Bienvenido Inventario</h1>
             <!-- Botón Nube visible solo para ADM -->
             <button class="header-btn-upload adm-only" id="btn-cloud-master" onclick="downloadMasterFromCloud()" title="Descargar Maestro">☁️</button>
         </div>
@@ -326,10 +326,10 @@
 
     <!-- LÓGICA JAVASCRIPT -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-storage.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         // --- CONFIGURACIÓN FIREBASE (Tus Credenciales) ---
         const firebaseConfig = {
@@ -405,15 +405,21 @@
 
         // --- AUTHENTICATION ---
         async function loginUsuario() {
-            const user = document.getElementById('login-user').value.trim();
+            let user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
             if (!user || !pass) return alert("Ingrese credenciales");
             
+            // Si el usuario escribió el correo completo, lo corregimos
+            if (user.includes('@')) {
+                user = user.split('@')[0];
+            }
+
             const email = `${user.toLowerCase()}@grupocargo.com`;
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
             } catch (e) {
-                alert("Usuario o Contraseña incorrectos");
+                console.error(e);
+                alert("Error de acceso: " + e.code); // Muestra el error real (ej: user-not-found)
             }
         }
 
@@ -768,6 +774,9 @@
             });
         }
 
+        // --- CÁMARA ---
+        if ('BarcodeDetector' in window) barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
+        
         async function startCamera(target) {
             scanningTarget = document.getElementById(target);
             try {
