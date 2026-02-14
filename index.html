@@ -11,7 +11,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Inventario Cargo">
     
-    <title>Bienvenido Inventario - Grupo Cargo</title>
+    <!-- Iconos para la Pantalla de Inicio (Reemplaza estas URLs por tu logo real) -->
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/180/box--v1.png">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/192/box--v1.png">
+    
+    <title>Bienvenido</title>
     <style>
         /* --- ESTILOS VISUALES --- */
         :root {
@@ -190,8 +194,8 @@
     <!-- 1. LOGIN SCREEN -->
     <div id="login-screen">
         <div class="login-box">
-            <h2>GRUPO CARGO</h2>
-            <p style="font-size:13px; color:#64748B; margin-bottom:20px;">Acceso seguro al sistema</p>
+            <h2>CARGO</h2>
+            <p style="font-size:13px; color:#64748B; margin-bottom:20px;">Acceso al sistema</p>
             <input type="text" id="login-user" placeholder="Nombre de Usuario (ej: luciano)">
             <input type="password" id="login-pass" placeholder="Contraseña">
             <button class="btn btn-primary" onclick="loginUsuario()">INGRESAR</button>
@@ -353,7 +357,7 @@
 
         // --- CONFIGURACIÓN DE PROYECTO ---
         const firebaseConfig = {
-            apiKey: "AIzaSyDI2_dfJ5WbGCoddHPaXg40yrxEZqB4ZXI",
+            apiKey: "AIzaSyDI2_dfJ5WBgCoddHPaXg40yrxEZqB4ZXI",
             authDomain: "inventarioapp-cddbe.firebaseapp.com",
             projectId: "inventarioapp-cddbe",
             storageBucket: "inventarioapp-cddbe.firebasestorage.app",
@@ -409,7 +413,7 @@
 
             loadLocalMaster();
 
-            // Lógica para registrar el Manifest dinámicamente si es posible
+            // Lógica para registrar el Manifest dinámicamente con iconos mejorados
             const manifest = {
                 "name": "Inventario Cargo",
                 "short_name": "InvCargo",
@@ -418,11 +422,18 @@
                 "background_color": "#0D2334",
                 "description": "Sistema de Inventario Pro V31",
                 "theme_color": "#0D2334",
-                "icons": [{
-                    "src": "https://via.placeholder.com/192",
-                    "sizes": "192x192",
-                    "type": "image/png"
-                }]
+                "icons": [
+                    {
+                        "src": "https://img.icons8.com/color/192/box--v1.png",
+                        "sizes": "192x192",
+                        "type": "image/png"
+                    },
+                    {
+                        "src": "https://img.icons8.com/color/512/box--v1.png",
+                        "sizes": "512x512",
+                        "type": "image/png"
+                    }
+                ]
             };
             const stringManifest = JSON.stringify(manifest);
             const blob = new Blob([stringManifest], {type: 'application/json'});
