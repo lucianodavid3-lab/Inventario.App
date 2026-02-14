@@ -208,7 +208,7 @@
         
         <!-- Alertas de Maestro -->
         <div id="master-alert-box" class="master-alert" style="background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; padding:10px; border-radius:8px; font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
-            <span>⚠️</span> <div><strong>ATENCIÓN:</strong> El maestro no está cargado.</div>
+            <span>⚠️</span> <div><strong>ATENCIÓN:</strong> El maestro no está cargado en esta sesión.</div>
         </div>
         <div id="master-success-box" class="master-alert" style="display:none; background:#DCFCE7; border:1px solid #86EFAC; color:#166534; padding:10px; border-radius:8px; font-size:12px; margin-bottom:10px; align-items:center; gap:10px;">
             <span>✅</span> <div id="master-info-text">Maestro activo.</div>
@@ -331,8 +331,7 @@
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-        // --- DEFINICIONES DE FUNCIONES AL INICIO (Para evitar error "not defined") ---
-        
+        // --- DEFINICIONES DE FUNCIONES AL INICIO ---
         let barcodeDetector = null;
         async function checkBarcodeSupport() {
              if ('BarcodeDetector' in window) {
@@ -344,7 +343,7 @@
 
         // --- CONFIGURACIÓN DE PROYECTO ---
         const firebaseConfig = {
-            apiKey: "AIzaSyDI2_dfJ5WbGCoddHPaXg40yrxEZqB4ZXI", // <--- Pégala aquí después de cambiar el proyecto en la consola
+            apiKey: "AIzaSyDI2_dfJ5WbGCoddHPaXg40yrxEZqB4ZXI",
             authDomain: "inventarioapp-cddbe.firebaseapp.com",
             projectId: "inventarioapp-cddbe",
             storageBucket: "inventarioapp-cddbe.firebasestorage.app",
@@ -360,6 +359,7 @@
         // --- VARIABLES GLOBALES ---
         const ADMIN_EMAIL = "lvilla@grupocargo.com";
         const EMAIL_RECIPIENTS = "lvilla@grupocargo.com,falvarado@grupocargo.com";
+        
         let masterData = new Map();
         let MASTER_CODES = new Set();
         let records = [];
@@ -368,7 +368,7 @@
         let pendingSaveData = null;
         let currentIntruderData = null;
 
-        // --- EXPOSICIÓN DE FUNCIONES AL HTML ---
+        // --- EXPOSICIÓN DE FUNCIONES ---
         window.loginUsuario = loginUsuario;
         window.logout = logout;
         window.downloadMasterFromCloud = downloadMasterFromCloud;
@@ -385,7 +385,6 @@
         window.closeIntruderModal = closeIntruderModal;
         window.deleteRecord = deleteRecord;
 
-        // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
             checkBarcodeSupport();
             loadIntruderConfig();
@@ -401,52 +400,35 @@
             loadLocalMaster();
         });
 
-        // --- AUTH ---
         async function loginUsuario() {
             let user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
             if (!user || !pass) return alert("Ingrese credenciales");
-            
             let email = user;
-            if (!user.includes('@')) {
-                email = `${user.toLowerCase()}@grupocargo.com`;
-            }
-
+            if (!user.includes('@')) { email = `${user.toLowerCase()}@grupocargo.com`; }
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
             } catch (e) {
                 console.error("Login Error:", e);
-                if (e.code === 'auth/api-key-not-valid') {
-                    alert("ERROR DE CONFIGURACIÓN:\n\nClave API rechazada. Asegúrate de haber seleccionado el proyecto 'inventarioapp-cddbe' en Google Cloud y haber quitado las restricciones.");
-                } else if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
-                    alert("Usuario o Contraseña incorrectos.");
-                } else {
-                    alert("Error de acceso: " + e.code); 
-                }
+                alert("Error de acceso: " + e.code); 
             }
         }
 
         function logout() { signOut(auth); }
 
         onAuthStateChanged(auth, (user) => {
-            const loginScreen = document.getElementById('login-screen');
-            const mainHeader = document.getElementById('main-header');
-            
             if (user) {
-                loginScreen.style.display = 'none';
-                mainHeader.style.display = 'block';
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-header').style.display = 'block';
                 document.getElementById('view-conteo').classList.add('active');
-                
                 document.getElementById('user-display').value = user.email.split('@')[0].toUpperCase();
-
                 const isAdmin = user.email === ADMIN_EMAIL;
                 document.querySelectorAll('.adm-only').forEach(el => el.style.display = isAdmin ? 'grid' : 'none');
                 if (isAdmin) document.getElementById('btn-cloud-master').style.display = 'flex';
-
                 initRealtimeSync();
             } else {
-                loginScreen.style.display = 'flex';
-                mainHeader.style.display = 'none';
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('main-header').style.display = 'none';
                 document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             }
         });
@@ -460,20 +442,20 @@
             });
         }
 
-        // --- MAESTRO ---
+        // --- MAESTRO MEJORADO CON FALLBACK DE MEMORIA ---
         async function downloadMasterFromCloud() {
             const btn = document.getElementById('btn-cloud-master');
             btn.innerHTML = "⏳";
             try {
                 const url = await getDownloadURL(ref(storage, 'maestro.csv'));
                 const res = await fetch(url);
+                if (!res.ok) throw new Error("Archivo no encontrado.");
                 const text = await res.text();
                 processMasterData(text);
                 btn.innerHTML = "✅";
-                alert(`Maestro sincronizado: ${masterData.size} items.`);
             } catch (e) {
                 console.error(e);
-                alert("Error descargando maestro. Verifique conexión y permisos.");
+                alert("Error descargando maestro: " + e.message);
                 btn.innerHTML = "☁️";
             }
         }
@@ -486,33 +468,72 @@
             const sep = lines[0].indexOf(';') > -1 ? ';' : ',';
             
             lines.forEach(l => {
+                if (!l.trim()) return;
                 const c = l.split(sep).map(x => x.trim().replace(/^"|"$/g, '').toUpperCase());
-                if (c.length >= 3 && c[0]) {
+                
+                if (c.length >= 2 && c[0]) {
+                    const id = c[0];
                     const matCode = c[1];
-                    masterData.set(c[0], { mat: matCode, stock: parseFloat(c[2]) || 0, storage: c[3]||'', doc: c[4]||'' });
+                    const entry = { 
+                        mat: matCode, 
+                        stock: parseFloat(c[2]) || 0, 
+                        storage: c[3]||'', 
+                        doc: c[4]||'' 
+                    };
+
+                    if (masterData.has(id)) {
+                        masterData.get(id).push(entry);
+                    } else {
+                        masterData.set(id, [entry]);
+                    }
+                    
                     MASTER_CODES.add(matCode);
                     count++;
                 }
             });
 
-            localStorage.setItem('inv_master_v31', JSON.stringify(Array.from(masterData.entries())));
-            updateMasterUI();
+            // FIX: Manejo de QuotaExceededError
+            try {
+                const serialized = JSON.stringify(Array.from(masterData.entries()));
+                localStorage.setItem('inv_master_v31', serialized);
+                console.log("Caché local guardada.");
+            } catch (e) {
+                console.warn("No se pudo guardar en el almacenamiento permanente (Límite excedido). Se usará memoria RAM.", e);
+                // No lanzamos error, simplemente dejamos que siga en memoria
+            }
+            
+            document.getElementById('master-alert-box').style.display = 'none';
+            document.getElementById('master-success-box').style.display = 'flex';
+            document.getElementById('master-info-text').innerText = `Maestro activo: ${count} registros cargados.`;
+            
+            alert(`Carga Exitosa:\nSe procesaron ${count} líneas. Los datos están listos en memoria RAM.`);
         }
 
         function loadLocalMaster() {
             const stored = localStorage.getItem('inv_master_v31');
             if (stored) {
-                masterData = new Map(JSON.parse(stored));
-                for(let [k,v] of masterData) MASTER_CODES.add(v.mat);
-                updateMasterUI();
+                try {
+                    masterData = new Map(JSON.parse(stored));
+                    MASTER_CODES.clear();
+                    for (let [ubi, items] of masterData) {
+                        items.forEach(item => MASTER_CODES.add(item.mat));
+                    }
+                    updateMasterUI();
+                } catch(e) { 
+                    console.error("Error cargando caché", e);
+                    localStorage.removeItem('inv_master_v31');
+                }
             }
         }
 
         function updateMasterUI() {
-            if (masterData.size > 0) {
+            let totalCount = 0;
+            for (let [key, val] of masterData) totalCount += val.length;
+            
+            if (totalCount > 0) {
                 document.getElementById('master-alert-box').style.display = 'none';
                 document.getElementById('master-success-box').style.display = 'flex';
-                document.getElementById('master-info-text').innerText = `Maestro activo: ${masterData.size} registros.`;
+                document.getElementById('master-info-text').innerText = `Maestro activo: ${totalCount} registros.`;
             }
         }
 
@@ -528,60 +549,36 @@
             if (!ubi || !mat || isNaN(qty)) return alert("Complete todos los campos.");
             if (!checkLocation(ubi)) return;
 
-            let status = 'OK';
-            let diff = null;
-            let finalMaterial = mat;
-            let finalStorage = '';
-            let finalDoc = '';
-            let theoretical = 0;
+            let status = 'OK', diff = null, finalMaterial = mat, finalStorage = '', finalDoc = '', theoretical = 0;
 
             if (ubi.startsWith("INV")) {
                 status = 'INTRUSO_UBI';
                 finalMaterial = matchMaterial(mat);
             } else {
-                const master = masterData.get(ubi);
-                if (!master) {
+                const masterList = masterData.get(ubi); 
+                if (!masterList) {
                     status = 'ERROR'; 
                     diff = qty;
                 } else {
-                    finalStorage = master.storage;
-                    finalDoc = master.doc;
-                    theoretical = master.stock;
-                    
-                    const match = matchMaterial(mat, master.mat);
-                    if (match) {
-                        finalMaterial = match;
+                    const matchingEntry = masterList.find(m => matchMaterial(mat, m.mat));
+                    if (matchingEntry) {
+                        finalMaterial = matchingEntry.mat;
+                        theoretical = matchingEntry.stock;
+                        finalStorage = matchingEntry.storage;
+                        finalDoc = matchingEntry.doc;
                         diff = qty - theoretical;
                     } else {
                         status = 'INTRUSO_MAT';
                         const suggested = matchMaterial(mat);
-                        
-                        pendingSaveData = {
-                            id: Date.now(),
-                            date: new Date().toLocaleDateString(),
-                            time: new Date().toLocaleTimeString(),
-                            user, location: ubi, material: suggested || mat,
-                            storage: finalStorage, doc: finalDoc,
-                            qty, theoretical: 0, status, diff: null
-                        };
-                        
+                        const defaultData = masterList[0];
+                        pendingSaveData = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), user, location: ubi, material: suggested || mat, storage: defaultData.storage, doc: defaultData.doc, qty, theoretical: 0, status, diff: null };
+                        const expectedStr = masterList.map(m => m.mat).join(" O ");
                         playSound('error');
-                        return showAlert('Discrepancia', 
-                            `Material incorrecto.\nEsperado: ${master.mat}\nLeído: ${mat}`, 
-                            confirmSave, true, handleIntruderRegistration);
+                        return showAlert('Discrepancia', `Material incorrecto en ${ubi}.\n\nLeído: ${mat}\nEsperado: ${expectedStr}`, confirmSave, true, handleIntruderRegistration);
                     }
                 }
             }
-
-            const record = {
-                id: Date.now(),
-                date: new Date().toLocaleDateString(),
-                time: new Date().toLocaleTimeString(),
-                user, location: ubi, material: finalMaterial,
-                storage: finalStorage, doc: finalDoc,
-                qty, theoretical, status, diff
-            };
-
+            const record = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), user, location: ubi, material: finalMaterial, storage: finalStorage, doc: finalDoc, qty, theoretical, status, diff };
             saveRecord(record);
         }
 
@@ -590,39 +587,47 @@
                 await addDoc(collection(db, "conteos"), record);
                 playSound('success');
                 clearForm();
-            } catch (e) {
-                alert("Error guardando en la nube.");
-            }
+            } catch (e) { alert("Error guardando en la nube."); }
         }
 
         function matchMaterial(scan, expected) {
             if (expected && scan.substring(0,9) === expected.substring(0,9)) return expected;
-            for (let code of MASTER_CODES) {
-                if (scan.substring(0,9) === code.substring(0,9)) return code;
-            }
+            for (let code of MASTER_CODES) { if (scan.substring(0,9) === code.substring(0,9)) return code; }
             return expected ? null : scan;
         }
 
-        // --- INTRUSOS ---
+        function verifyMaterialBeforeQty(cb) {
+            const ubi = cleanString(document.getElementById('location').value);
+            const mat = cleanString(document.getElementById('material').value);
+            if(!mat) return;
+            if (ubi.startsWith("INV")) { cb(); return; }
+            const masterList = masterData.get(ubi);
+            if (masterList) {
+                const match = masterList.some(m => matchMaterial(mat, m.mat));
+                if (!match) {
+                    const expectedStr = masterList.map(m => m.mat).join(" O ");
+                    playSound('error');
+                    showAlert('Material Inesperado', `Leído: ${mat}\nEsperado: ${expectedStr}`, () => { closeModal(); cb(); }, true, handleIntruderRegistration);
+                    return;
+                }
+            }
+            cb();
+        }
+
         function handleIntruderRegistration() {
             closeModal();
             const start = intruderConfig.locked ? intruderConfig.start : parseInt(document.getElementById('intruder-start').value);
             const end = intruderConfig.locked ? intruderConfig.end : parseInt(document.getElementById('intruder-end').value);
-            
             let found = null;
             for(let i = start; i <= end; i++) {
                 const candidate = "INV" + String(i).padStart(3, '0');
                 if (!records.some(r => r.location === candidate)) { found = candidate; break; }
             }
-
             if (!found) return alert("Sin huecos INV disponibles.");
-
             const mat = document.getElementById('material').value;
             const finalMat = matchMaterial(mat) || mat;
             const user = auth.currentUser.email.split('@')[0].toUpperCase();
-
             currentIntruderData = { location: found, material: finalMat, user };
-            
             document.getElementById('intruder-location-display').innerText = found;
             document.getElementById('intruder-material-display').innerText = finalMat;
             document.getElementById('intruder-qty-input').value = '';
@@ -633,22 +638,11 @@
         function confirmIntruderSave() {
             const qty = parseFloat(document.getElementById('intruder-qty-input').value);
             if (isNaN(qty)) return alert("Cantidad inválida");
-            
-            const record = {
-                id: Date.now(),
-                date: new Date().toLocaleDateString(),
-                time: new Date().toLocaleTimeString(),
-                user: currentIntruderData.user,
-                location: currentIntruderData.location,
-                material: currentIntruderData.material,
-                qty: qty, status: 'INTRUSO_UBI', doc: 'INTRUSO', theoretical: 0, diff: qty
-            };
-            
+            const record = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), user: currentIntruderData.user, location: currentIntruderData.location, material: currentIntruderData.material, qty: qty, status: 'INTRUSO_UBI', doc: 'INTRUSO', theoretical: 0, diff: qty };
             saveRecord(record);
             closeIntruderModal();
         }
 
-        // --- UTILIDADES ---
         function cleanString(str) { return str ? str.trim().toUpperCase() : ""; }
         function clearForm() {
             document.getElementById('location').value = '';
@@ -671,66 +665,26 @@
             const tbody = document.getElementById('records-body');
             document.getElementById('count-badge').innerText = records.length;
             const isAdmin = auth.currentUser?.email === ADMIN_EMAIL;
-            tbody.innerHTML = records.map(r => `
-                <tr>
-                    <td style="color:#666">${r.date}</td>
-                    <td><b>${r.location}</b></td>
-                    <td>${r.material}</td>
-                    <td style="text-align:center; font-weight:bold">${r.qty}</td>
-                    <td style="font-size:10px">${r.user}</td>
-                    <td><span class="status-badge ${r.status==='OK'?'bg-ok':(r.status==='VACIO'?'bg-empty':'bg-err')}">${r.status}</span></td>
-                    <td class="adm-only">${isAdmin ? `<button class="btn-delete" onclick="deleteRecord('${r.firebaseId}')">🗑️</button>` : ''}</td>
-                </tr>
-            `).join('');
-            
+            tbody.innerHTML = records.map(r => `<tr><td style="color:#666">${r.date}</td><td><b>${r.location}</b></td><td>${r.material}</td><td style="text-align:center; font-weight:bold">${r.qty}</td><td style="font-size:10px">${r.user}</td><td><span class="status-badge ${r.status==='OK'?'bg-ok':(r.status==='VACIO'?'bg-empty':'bg-err')}">${r.status}</span></td><td class="adm-only">${isAdmin ? `<button class="btn-delete" onclick="deleteRecord('${r.firebaseId}')">🗑️</button>` : ''}</td></tr>`).join('');
             if(isAdmin) document.querySelectorAll('.adm-only').forEach(el => el.style.display = 'table-cell');
         }
 
         function checkLocation(ubi) {
-            if (records.some(r => r.location === ubi)) {
-                showAlert('Duplicado', `Ubicación ${ubi} ya contada.`, null, true);
-                playSound('error');
-                return false;
-            }
+            if (records.some(r => r.location === ubi)) { showAlert('Duplicado', `Ubicación ${ubi} ya contada.`, null, true); playSound('error'); return false; }
             const zone = document.getElementById('zone-filter').value.toUpperCase();
-            if (zone && !ubi.startsWith(zone)) {
-                showAlert('Zona Incorrecta', `Ubicación no pertenece a zona ${zone}`, null, true);
-                playSound('error');
-                return false;
-            }
+            if (zone && !ubi.startsWith(zone)) { showAlert('Zona Incorrecta', `Ubicación no pertenece a zona ${zone}`, null, true); playSound('error'); return false; }
             return true;
-        }
-
-        function verifyMaterialBeforeQty(cb) {
-            const ubi = cleanString(document.getElementById('location').value);
-            const mat = cleanString(document.getElementById('material').value);
-            if(!mat) return;
-            if (ubi.startsWith("INV")) { cb(); return; }
-            const master = masterData.get(ubi);
-            if (master && !matchMaterial(mat, master.mat)) {
-                playSound('error');
-                showAlert('Material Inesperado', `Leído: ${mat}\nEsperado: ${master.mat}`, 
-                    () => { closeModal(); cb(); }, true, handleIntruderRegistration);
-            } else {
-                cb();
-            }
         }
 
         function showAlert(t, m, cb, err, intCB) {
             document.getElementById('modal-title').innerText = t;
             document.getElementById('modal-msg').innerText = m;
             const box = document.getElementById('modal-box');
-            if(err) { box.classList.add('error-mode'); document.getElementById('modal-icon').innerText='⛔'; }
-            else { box.classList.remove('error-mode'); document.getElementById('modal-icon').innerText='⚠️'; }
-            
+            if(err) { box.classList.add('error-mode'); document.getElementById('modal-icon').innerText='⛔'; } else { box.classList.remove('error-mode'); document.getElementById('modal-icon').innerText='⚠️'; }
             const btnConf = document.getElementById('modal-confirm-btn');
             const btnInt = document.getElementById('modal-intruder-btn');
-            
-            btnConf.style.display = cb ? 'block' : 'none';
-            btnConf.onclick = cb;
-            btnInt.style.display = intCB ? 'block' : 'none';
-            btnInt.onclick = intCB;
-            
+            btnConf.style.display = cb ? 'block' : 'none'; btnConf.onclick = cb;
+            btnInt.style.display = intCB ? 'block' : 'none'; btnInt.onclick = intCB;
             document.getElementById('modal-overlay').style.display = 'flex';
         }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
@@ -738,12 +692,7 @@
         function confirmSave() { if(pendingSaveData) { saveRecord(pendingSaveData); pendingSaveData=null; closeModal(); } }
 
         async function deleteRecord(id) { if(confirm("¿Eliminar registro?")) await deleteDoc(doc(db, "conteos", id)); }
-        async function resetAllProtected() {
-            if(confirm("⚠️ ¿BORRAR TODO EL HISTORIAL?")) {
-                for(let r of records) await deleteDoc(doc(db, "conteos", r.firebaseId));
-                alert("Base de datos vaciada.");
-            }
-        }
+        async function resetAllProtected() { if(confirm("⚠️ ¿BORRAR TODO EL HISTORIAL?")) { for(let r of records) await deleteDoc(doc(db, "conteos", r.firebaseId)); alert("Base de datos vaciada."); } }
         function exportCSV() {
             let csv = "Fecha,Ubicacion,Material,Cantidad,Usuario,Estado\n";
             records.forEach(r => csv += `${r.date},${r.location},${r.material},${r.qty},${r.user},${r.status}\n`);
@@ -751,17 +700,8 @@
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'inv.csv'; a.click();
         }
         function sendByEmail() { alert("Para usar email directo use la App de Correo con el CSV."); }
-        function toggleRangeLock() {
-            intruderConfig.locked = !intruderConfig.locked;
-            localStorage.setItem('inv_config_v31', JSON.stringify(intruderConfig));
-            loadIntruderConfig();
-        }
-        function loadIntruderConfig() {
-            document.getElementById('intruder-start').disabled = intruderConfig.locked;
-            document.getElementById('intruder-end').disabled = intruderConfig.locked;
-            document.getElementById('btn-lock-range').innerText = intruderConfig.locked ? '🔒' : '🔓';
-        }
-
+        function toggleRangeLock() { intruderConfig.locked = !intruderConfig.locked; localStorage.setItem('inv_config_v31', JSON.stringify(intruderConfig)); loadIntruderConfig(); }
+        function loadIntruderConfig() { document.getElementById('intruder-start').disabled = intruderConfig.locked; document.getElementById('intruder-end').disabled = intruderConfig.locked; document.getElementById('btn-lock-range').innerText = intruderConfig.locked ? '🔒' : '🔓'; }
         function setupAutoAdvance(id, nextId, type) {
             document.getElementById(id).addEventListener('keydown', e => {
                 if(e.key === 'Enter' && e.target.value.trim()) {
@@ -773,7 +713,6 @@
             });
         }
 
-        // --- CÁMARA ---
         async function startCamera(target) {
             scanningTarget = document.getElementById(target);
             try {
