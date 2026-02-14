@@ -11,11 +11,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Inventario Cargo">
     
-    <!-- Iconos para la Pantalla de Inicio (Reemplaza estas URLs por tu logo real) -->
-    <link rel="apple-touch-icon" href="https://img.icons8.com/color/180/box--v1.png">
-    <link rel="icon" type="image/png" href="https://img.icons8.com/color/192/box--v1.png">
+    <!-- Iconos para la Pantalla de Inicio (Usando tu archivo local logo.png) -->
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
     
-    <title>Bienvenido</title>
+    <title>Inventario Pro - V31.2</title>
     <style>
         /* --- ESTILOS VISUALES --- */
         :root {
@@ -42,7 +42,6 @@
             padding: 0;
             padding-bottom: 40px;
             overflow-x: hidden;
-            /* Evita el rebote de scroll en iOS para mayor sensación de App */
             overscroll-behavior-y: contain;
         }
 
@@ -58,14 +57,21 @@
             padding: 30px; text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
-        .login-box h2 { color: var(--navy-main); margin-bottom: 10px; font-weight: 800; }
+        .login-logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 15px;
+            border-radius: 12px;
+        }
+        .login-box h2 { color: var(--navy-main); margin-bottom: 5px; font-weight: 800; }
+        .version-tag { font-size: 10px; color: var(--text-muted); margin-bottom: 20px; display: block; }
         
         /* --- CABECERA --- */
         header {
             background-color: var(--navy-main);
             color: white;
             padding: 10px 16px 0 16px;
-            padding-top: calc(10px + env(safe-area-inset-top)); /* Ajuste para notches */
+            padding-top: calc(10px + env(safe-area-inset-top)); 
             box-shadow: 0 4px 12px rgba(13,35,52,0.2);
             position: sticky; top: 0; z-index: 100;
         }
@@ -194,9 +200,12 @@
     <!-- 1. LOGIN SCREEN -->
     <div id="login-screen">
         <div class="login-box">
-            <h2>CARGO</h2>
-            <p style="font-size:13px; color:#64748B; margin-bottom:20px;">Acceso al sistema</p>
-            <input type="text" id="login-user" placeholder="Nombre de Usuario (ej: luciano)">
+            <!-- Imagen del Logo (Subir logo.png a tu repo de GitHub) -->
+            <img src="logo.png" alt="Logo Grupo Cargo" class="login-logo" onerror="this.style.display='none'">
+            
+            <h2>GRUPO CARGO</h2>
+            <span class="version-tag">SISTEMA INVENTARIO V31.2</span>
+            <input type="text" id="login-user" placeholder="Usuario (ej: luciano)">
             <input type="password" id="login-pass" placeholder="Contraseña">
             <button class="btn btn-primary" onclick="loginUsuario()">INGRESAR</button>
         </div>
@@ -206,8 +215,7 @@
     <header id="main-header" style="display:none;">
         <div class="header-top">
             <button class="logout-btn" onclick="logout()">SALIR</button>
-            <h1>Bienvenido Inventario</h1>
-            <!-- Botón Nube visible solo para ADM -->
+            <h1>Inventario Cargo</h1>
             <button class="header-btn-upload adm-only" id="btn-cloud-master" onclick="downloadMasterFromCloud()" title="Descargar Maestro">☁️</button>
         </div>
         
@@ -217,21 +225,18 @@
         </div>
     </header>
 
-    <!-- VISTA CONTEO -->
     <div id="view-conteo" class="view active container">
-        
-        <!-- Alertas de Maestro -->
-        <div id="master-alert-box" class="master-alert" style="background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; padding:10px; border-radius:8px; font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
-            <span>⚠️</span> <div><strong>ATENCIÓN:</strong> El maestro no está cargado en esta sesión.</div>
+        <div id="master-alert-box" style="background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; padding:10px; border-radius:8px; font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
+            <span>⚠️</span> <div><strong>ATENCIÓN:</strong> El maestro no está cargado.</div>
         </div>
-        <div id="master-success-box" class="master-alert" style="display:none; background:#DCFCE7; border:1px solid #86EFAC; color:#166534; padding:10px; border-radius:8px; font-size:12px; margin-bottom:10px; align-items:center; gap:10px;">
+        <div id="master-success-box" style="display:none; background:#DCFCE7; border:1px solid #86EFAC; color:#166534; padding:10px; border-radius:8px; font-size:12px; margin-bottom:10px; align-items:center; gap:10px;">
             <span>✅</span> <div id="master-info-text">Maestro activo.</div>
         </div>
 
         <div class="card">
-            <div class="input-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                 <div>
-                    <label>Usuario Activo</label>
+                    <label>Usuario</label>
                     <input type="text" id="user-display" disabled style="font-weight:bold; background:#F1F5F9;">
                 </div>
                 <div>
@@ -240,9 +245,8 @@
                 </div>
             </div>
             
-            <!-- Configuración Intrusos (Solo ADM) -->
             <div class="adm-only" style="margin-top:10px;">
-                <label>Configuración Intrusos</label>
+                <label>Rango Intrusos</label>
                 <div style="display:grid; grid-template-columns: 1fr 1fr 60px; gap:8px;">
                     <input type="number" id="intruder-start" value="1">
                     <input type="number" id="intruder-end" value="300">
@@ -251,33 +255,27 @@
             </div>
         </div>
 
-        <!-- CÁMARA -->
         <div id="camera-container">
             <video id="video" playsinline muted autoplay></video>
-            <div class="camera-overlay">APUNTE AL CÓDIGO</div>
-            <button onclick="stopCamera()" style="position: absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); border:none; color:white; width:30px; height:30px; border-radius:50%; font-weight:bold;">✕</button>
+            <div class="camera-overlay">ESCANEANDO...</div>
         </div>
         <input type="file" id="scan-fallback" accept="image/*" capture="environment" hidden>
 
-        <!-- Formulario de Conteo -->
         <div class="card">
             <div class="input-wrapper">
                 <label>Ubicación</label>
                 <input type="text" id="location" placeholder="Escanear ubicación">
                 <button class="input-action-btn" onclick="startCamera('location')">📷</button>
             </div>
-
             <div class="input-wrapper">
                 <label>Material</label>
                 <input type="text" id="material" placeholder="Escanear material">
                 <button class="input-action-btn" onclick="startCamera('material')">📷</button>
             </div>
-
             <div class="input-wrapper">
                 <label>Cantidad</label>
                 <input type="number" id="qty" placeholder="0" inputmode="numeric">
             </div>
-
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
                 <button class="btn btn-secondary" onclick="clearForm()">LIMPIAR</button>
                 <button class="btn btn-primary" onclick="validateAndSave()">GUARDAR</button>
@@ -285,28 +283,17 @@
         </div>
     </div>
 
-    <!-- VISTA HISTORIAL -->
     <div id="view-historial" class="view container">
-        <!-- Acciones ADM -->
         <div class="card adm-only" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
             <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:10px;">CSV</button>
-            <button class="btn btn-secondary" onclick="sendByEmail()" style="font-size:10px;">MAIL</button>
+            <button class="btn btn-secondary" onclick="window.location.reload()" style="font-size:10px;">REFRESCAR</button>
             <button class="btn btn-danger-block" onclick="resetAllProtected()" style="font-size:10px;">BORRAR TODO</button>
         </div>
-
         <div class="card" style="padding: 0; overflow: hidden;">
             <div class="table-wrap">
                 <table id="records-table">
                     <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Ubi</th>
-                            <th>Mat</th>
-                            <th>Cant</th>
-                            <th>User</th>
-                            <th>Est</th>
-                            <th class="adm-only"></th>
-                        </tr>
+                        <tr><th>Fecha</th><th>Ubi</th><th>Mat</th><th>Cant</th><th>User</th><th>Est</th><th class="adm-only"></th></tr>
                     </thead>
                     <tbody id="records-body"></tbody>
                 </table>
@@ -314,46 +301,24 @@
         </div>
     </div>
 
-    <!-- MODALES -->
-    <div id="modal-overlay">
-        <div class="modal-box" id="modal-box">
-            <div id="modal-icon" style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
-            <div class="modal-title" id="modal-title">Atención</div>
-            <div class="modal-msg" id="modal-msg">Mensaje</div>
-            <button class="modal-btn danger" id="modal-confirm-btn">Confirmar</button>
-            <button class="modal-btn intruder" id="modal-intruder-btn" style="display:none;">REGISTRAR INTRUSO</button>
-            <button class="modal-btn cancel" onclick="closeModal()">Cancelar</button>
-        </div>
-    </div>
-
+    <!-- MODAL INTRUSO -->
     <div id="intruder-modal-overlay">
         <div class="modal-box">
             <div class="modal-title">REGISTRAR INTRUSO</div>
-            <div style="font-size: 12px; color: #64748B;">Asignando a:</div>
             <div id="intruder-location-display" style="font-size: 24px; font-weight: 900; color: #D70F27; margin: 10px 0;"></div>
             <div style="font-size: 14px; margin-bottom: 5px;">Material: <span id="intruder-material-display" style="font-weight:bold;"></span></div>
-            <input type="number" id="intruder-qty-input" placeholder="Cantidad" style="margin-bottom: 15px; text-align: center; font-weight: bold;">
+            <input type="number" id="intruder-qty-input" placeholder="Cantidad" style="margin-bottom: 15px; text-align: center;">
             <button class="btn btn-primary" id="btn-save-intruder">GUARDAR</button>
-            <button class="btn btn-secondary" onclick="closeIntruderModal()" style="margin-top: 8px;">CANCELAR</button>
+            <button class="btn btn-secondary" onclick="closeIntruderModal()">CANCELAR</button>
         </div>
     </div>
 
-    <!-- LÓGICA JAVASCRIPT -->
+    <!-- LÓGICA -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-
-        // --- DEFINICIONES DE FUNCIONES AL INICIO ---
-        let barcodeDetector = null;
-        async function checkBarcodeSupport() {
-             if ('BarcodeDetector' in window) {
-                 try {
-                    barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
-                 } catch(e) { console.log("Error BarcodeDetector", e); }
-             }
-        }
 
         // --- CONFIGURACIÓN DE PROYECTO ---
         const firebaseConfig = {
@@ -370,95 +335,40 @@
         const storage = getStorage(app);
         const auth = getAuth(app);
 
-        // --- VARIABLES GLOBALES ---
+        // Variables Globales
         const ADMIN_EMAIL = "lvilla@grupocargo.com";
-        const EMAIL_RECIPIENTS = "lvilla@grupocargo.com,falvarado@grupocargo.com";
-        
         let masterData = new Map();
         let MASTER_CODES = new Set();
         let records = [];
         let intruderConfig = JSON.parse(localStorage.getItem('inv_config_v31')) || { start: 1, end: 300, locked: false };
+        let barcodeDetector = null;
         let scanningTarget = null;
-        let pendingSaveData = null;
         let currentIntruderData = null;
 
-        // --- EXPOSICIÓN DE FUNCIONES ---
-        window.loginUsuario = loginUsuario;
-        window.logout = logout;
-        window.downloadMasterFromCloud = downloadMasterFromCloud;
-        window.switchView = switchView;
-        window.toggleRangeLock = toggleRangeLock;
-        window.startCamera = startCamera;
-        window.stopCamera = stopCamera;
-        window.clearForm = clearForm;
-        window.validateAndSave = validateAndSave;
-        window.exportCSV = exportCSV;
-        window.sendByEmail = sendByEmail;
-        window.resetAllProtected = resetAllProtected;
-        window.closeModal = closeModal;
-        window.closeIntruderModal = closeIntruderModal;
-        window.deleteRecord = deleteRecord;
+        // Inicialización Barcode
+        if ('BarcodeDetector' in window) {
+            barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
+        }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            checkBarcodeSupport();
-            loadIntruderConfig();
-            
-            document.getElementById('scan-fallback').addEventListener('change', handleFallbackImage);
-            document.getElementById('intruder-qty-input').addEventListener('keydown', (e) => { if(e.key === 'Enter') confirmIntruderSave(); });
-            document.getElementById('btn-save-intruder').addEventListener('click', confirmIntruderSave);
-            
-            setupAutoAdvance('location', 'material', 'location');
-            setupAutoAdvance('material', 'qty', 'material');
-            setupAutoAdvance('qty', 'SAVE', 'save');
-
-            loadLocalMaster();
-
-            // Lógica para registrar el Manifest dinámicamente con iconos mejorados
-            const manifest = {
-                "name": "Inventario Cargo",
-                "short_name": "InvCargo",
-                "start_url": ".",
-                "display": "standalone",
-                "background_color": "#0D2334",
-                "description": "Sistema de Inventario Pro V31",
-                "theme_color": "#0D2334",
-                "icons": [
-                    {
-                        "src": "https://img.icons8.com/color/192/box--v1.png",
-                        "sizes": "192x192",
-                        "type": "image/png"
-                    },
-                    {
-                        "src": "https://img.icons8.com/color/512/box--v1.png",
-                        "sizes": "512x512",
-                        "type": "image/png"
-                    }
-                ]
-            };
-            const stringManifest = JSON.stringify(manifest);
-            const blob = new Blob([stringManifest], {type: 'application/json'});
-            const manifestURL = URL.createObjectURL(blob);
-            const link = document.createElement('link');
-            link.rel = 'manifest';
-            link.href = manifestURL;
-            document.head.appendChild(link);
-        });
-
-        async function loginUsuario() {
-            let user = document.getElementById('login-user').value.trim();
+        // --- AUTHENTICATION ---
+        window.loginUsuario = async () => {
+            const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
             if (!user || !pass) return alert("Ingrese credenciales");
-            let email = user;
-            if (!user.includes('@')) { email = `${user.toLowerCase()}@grupocargo.com`; }
+            const email = user.includes('@') ? user : `${user.toLowerCase()}@grupocargo.com`;
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
             } catch (e) {
-                console.error("Login Error:", e);
-                alert("Error de acceso: " + e.code); 
+                console.error("Error Login:", e);
+                if (e.code === 'auth/api-key-not-valid') {
+                    alert("ERROR CRÍTICO: La clave API fue rechazada.");
+                } else {
+                    alert("Error: " + e.code);
+                }
             }
-        }
+        };
 
-        function logout() { signOut(auth); }
+        window.logout = () => signOut(auth);
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -468,7 +378,6 @@
                 document.getElementById('user-display').value = user.email.split('@')[0].toUpperCase();
                 const isAdmin = user.email === ADMIN_EMAIL;
                 document.querySelectorAll('.adm-only').forEach(el => el.style.display = isAdmin ? 'grid' : 'none');
-                if (isAdmin) document.getElementById('btn-cloud-master').style.display = 'flex';
                 initRealtimeSync();
             } else {
                 document.getElementById('login-screen').style.display = 'flex';
@@ -478,331 +387,243 @@
         });
 
         function initRealtimeSync() {
-            onSnapshot(collection(db, "conteos"), (snapshot) => {
+            onSnapshot(collection(db, "conteos"), (snap) => {
                 records = [];
-                snapshot.forEach((doc) => records.push({ firebaseId: doc.id, ...doc.data() }));
+                snap.forEach(d => records.push({ firebaseId: d.id, ...d.data() }));
                 records.sort((a, b) => b.id - a.id);
                 renderTable();
             });
         }
 
-        // --- MAESTRO MEJORADO CON FALLBACK DE MEMORIA ---
-        async function downloadMasterFromCloud() {
+        // --- MAESTRO ---
+        window.downloadMasterFromCloud = async () => {
             const btn = document.getElementById('btn-cloud-master');
             btn.innerHTML = "⏳";
             try {
                 const url = await getDownloadURL(ref(storage, 'maestro.csv'));
                 const res = await fetch(url);
-                if (!res.ok) throw new Error("Archivo no encontrado.");
                 const text = await res.text();
                 processMasterData(text);
                 btn.innerHTML = "✅";
             } catch (e) {
-                console.error(e);
-                alert("Error descargando maestro: " + e.message);
+                alert("Error maestro: " + e.message);
                 btn.innerHTML = "☁️";
             }
-        }
+        };
 
         function processMasterData(csvText) {
             const lines = csvText.split(/\r\n|\n/);
             masterData.clear();
             MASTER_CODES.clear();
-            let count = 0;
             const sep = lines[0].indexOf(';') > -1 ? ';' : ',';
-            
+            let count = 0;
             lines.forEach(l => {
                 if (!l.trim()) return;
-                const c = l.split(sep).map(x => x.trim().replace(/^"|"$/g, '').toUpperCase());
-                
+                const c = l.split(sep).map(x => x.trim().toUpperCase());
                 if (c.length >= 2 && c[0]) {
-                    const id = c[0];
-                    const matCode = c[1];
-                    const entry = { 
-                        mat: matCode, 
-                        stock: parseFloat(c[2]) || 0, 
-                        storage: c[3]||'', 
-                        doc: c[4]||'' 
-                    };
-
-                    if (masterData.has(id)) {
-                        masterData.get(id).push(entry);
-                    } else {
-                        masterData.set(id, [entry]);
-                    }
-                    
-                    MASTER_CODES.add(matCode);
+                    const entry = { mat: c[1], stock: parseFloat(c[2]) || 0, storage: c[3]||'', doc: c[4]||'' };
+                    if (masterData.has(c[0])) masterData.get(c[0]).push(entry);
+                    else masterData.set(c[0], [entry]);
+                    MASTER_CODES.add(c[1]);
                     count++;
                 }
             });
-
-            // FIX: Manejo de QuotaExceededError
-            try {
-                const serialized = JSON.stringify(Array.from(masterData.entries()));
-                localStorage.setItem('inv_master_v31', serialized);
-                console.log("Caché local guardada.");
-            } catch (e) {
-                console.warn("No se pudo guardar en el almacenamiento permanente (Límite excedido). Se usará memoria RAM.", e);
-                // No lanzamos error, simplemente dejamos que siga en memoria
-            }
-            
-            document.getElementById('master-alert-box').style.display = 'none';
-            document.getElementById('master-success-box').style.display = 'flex';
-            document.getElementById('master-info-text').innerText = `Maestro activo: ${count} registros cargados.`;
-            
-            alert(`Carga Exitosa:\nSe procesaron ${count} líneas. Los datos están listos en memoria RAM.`);
+            try { localStorage.setItem('inv_master_v31', JSON.stringify(Array.from(masterData.entries()))); } catch(e){}
+            updateMasterUI(count);
         }
 
         function loadLocalMaster() {
             const stored = localStorage.getItem('inv_master_v31');
             if (stored) {
-                try {
-                    masterData = new Map(JSON.parse(stored));
-                    MASTER_CODES.clear();
-                    for (let [ubi, items] of masterData) {
-                        items.forEach(item => MASTER_CODES.add(item.mat));
-                    }
-                    updateMasterUI();
-                } catch(e) { 
-                    console.error("Error cargando caché", e);
-                    localStorage.removeItem('inv_master_v31');
-                }
+                masterData = new Map(JSON.parse(stored));
+                MASTER_CODES.clear();
+                for (let [u, items] of masterData) items.forEach(i => MASTER_CODES.add(i.mat));
+                updateMasterUI();
             }
         }
 
-        function updateMasterUI() {
-            let totalCount = 0;
-            for (let [key, val] of masterData) totalCount += val.length;
-            
-            if (totalCount > 0) {
+        function updateMasterUI(c) {
+            const count = c || Array.from(masterData.values()).flat().length;
+            if (count > 0) {
                 document.getElementById('master-alert-box').style.display = 'none';
                 document.getElementById('master-success-box').style.display = 'flex';
-                document.getElementById('master-info-text').innerText = `Maestro activo: ${totalCount} registros.`;
+                document.getElementById('master-info-text').innerText = `Maestro activo: ${count} registros.`;
             }
         }
 
-        // --- VALIDACIÓN Y GUARDADO ---
-        async function validateAndSave() {
-            if (masterData.size === 0) return alert("Error: Debe cargar el maestro primero.");
-            
-            const ubi = cleanString(document.getElementById('location').value);
-            const mat = cleanString(document.getElementById('material').value);
+        // --- LOGICA DE FORMULARIO ---
+        window.validateAndSave = async () => {
+            if (masterData.size === 0) return alert("Cargue el maestro.");
+            const ubi = document.getElementById('location').value.trim().toUpperCase();
+            const mat = document.getElementById('material').value.trim().toUpperCase();
             const qty = parseFloat(document.getElementById('qty').value);
-            const user = auth.currentUser.email.split('@')[0].toUpperCase();
+            if (!ubi || !mat || isNaN(qty)) return alert("Faltan datos.");
+            
+            if (records.some(r => r.location === ubi)) return alert("Ubicación ya contada.");
+            const zone = document.getElementById('zone-filter').value.toUpperCase();
+            if (zone && !ubi.startsWith(zone)) return alert("Zona incorrecta.");
 
-            if (!ubi || !mat || isNaN(qty)) return alert("Complete todos los campos.");
-            if (!checkLocation(ubi)) return;
-
-            let status = 'OK', diff = null, finalMaterial = mat, finalStorage = '', finalDoc = '', theoretical = 0;
+            let status = 'OK', theoretical = 0, diff = 0, finalMat = mat;
 
             if (ubi.startsWith("INV")) {
                 status = 'INTRUSO_UBI';
-                finalMaterial = matchMaterial(mat);
             } else {
-                const masterList = masterData.get(ubi); 
-                if (!masterList) {
-                    status = 'ERROR'; 
-                    diff = qty;
-                } else {
-                    const matchingEntry = masterList.find(m => matchMaterial(mat, m.mat));
-                    if (matchingEntry) {
-                        finalMaterial = matchingEntry.mat;
-                        theoretical = matchingEntry.stock;
-                        finalStorage = matchingEntry.storage;
-                        finalDoc = matchingEntry.doc;
-                        diff = qty - theoretical;
-                    } else {
+                const list = masterData.get(ubi);
+                if (!list) { status = 'ERROR'; diff = qty; }
+                else {
+                    const match = list.find(m => matchMaterial(mat, m.mat));
+                    if (match) { finalMat = match.mat; theoretical = match.stock; diff = qty - theoretical; }
+                    else {
                         status = 'INTRUSO_MAT';
-                        const suggested = matchMaterial(mat);
-                        const defaultData = masterList[0];
-                        pendingSaveData = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), user, location: ubi, material: suggested || mat, storage: defaultData.storage, doc: defaultData.doc, qty, theoretical: 0, status, diff: null };
-                        const expectedStr = masterList.map(m => m.mat).join(" O ");
                         playSound('error');
-                        return showAlert('Discrepancia', `Material incorrecto en ${ubi}.\n\nLeído: ${mat}\nEsperado: ${expectedStr}`, confirmSave, true, handleIntruderRegistration);
+                        const expectedStr = list.map(m => m.mat).join(" O ");
+                        if(confirm(`Material Inesperado. Esperado: ${expectedStr}. ¿Asignar como Intruso?`)) {
+                             handleIntruder(ubi, mat, qty); return;
+                        }
+                        return;
                     }
                 }
             }
-            const record = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), user, location: ubi, material: finalMaterial, storage: finalStorage, doc: finalDoc, qty, theoretical, status, diff };
-            saveRecord(record);
+
+            const record = { id: Date.now(), date: new Date().toLocaleDateString(), user: auth.currentUser.email.split('@')[0].toUpperCase(), location: ubi, material: finalMat, qty, theoretical, status, diff };
+            await addDoc(collection(db, "conteos"), record);
+            playSound('success');
+            clearForm();
+        };
+
+        function matchMaterial(scan, target) {
+            return scan.substring(0,9) === target.substring(0,9);
         }
 
-        async function saveRecord(record) {
-            try {
-                await addDoc(collection(db, "conteos"), record);
-                playSound('success');
-                clearForm();
-            } catch (e) { alert("Error guardando en la nube."); }
-        }
-
-        function matchMaterial(scan, expected) {
-            if (expected && scan.substring(0,9) === expected.substring(0,9)) return expected;
-            for (let code of MASTER_CODES) { if (scan.substring(0,9) === code.substring(0,9)) return code; }
-            return expected ? null : scan;
-        }
-
-        function verifyMaterialBeforeQty(cb) {
-            const ubi = cleanString(document.getElementById('location').value);
-            const mat = cleanString(document.getElementById('material').value);
-            if(!mat) return;
-            if (ubi.startsWith("INV")) { cb(); return; }
-            const masterList = masterData.get(ubi);
-            if (masterList) {
-                const match = masterList.some(m => matchMaterial(mat, m.mat));
-                if (!match) {
-                    const expectedStr = masterList.map(m => m.mat).join(" O ");
-                    playSound('error');
-                    showAlert('Material Inesperado', `Leído: ${mat}\nEsperado: ${expectedStr}`, () => { closeModal(); cb(); }, true, handleIntruderRegistration);
-                    return;
-                }
-            }
-            cb();
-        }
-
-        function handleIntruderRegistration() {
-            closeModal();
-            const start = intruderConfig.locked ? intruderConfig.start : parseInt(document.getElementById('intruder-start').value);
-            const end = intruderConfig.locked ? intruderConfig.end : parseInt(document.getElementById('intruder-end').value);
+        function handleIntruder(ubi, mat, qty) {
+            const start = parseInt(document.getElementById('intruder-start').value);
+            const end = parseInt(document.getElementById('intruder-end').value);
             let found = null;
             for(let i = start; i <= end; i++) {
-                const candidate = "INV" + String(i).padStart(3, '0');
-                if (!records.some(r => r.location === candidate)) { found = candidate; break; }
+                const cand = "INV" + String(i).padStart(3, '0');
+                if (!records.some(r => r.location === cand)) { found = cand; break; }
             }
-            if (!found) return alert("Sin huecos INV disponibles.");
-            const mat = document.getElementById('material').value;
-            const finalMat = matchMaterial(mat) || mat;
-            const user = auth.currentUser.email.split('@')[0].toUpperCase();
-            currentIntruderData = { location: found, material: finalMat, user };
+            if (!found) return alert("Sin huecos INV.");
+            currentIntruderData = { ubi: found, mat, user: auth.currentUser.email.split('@')[0].toUpperCase() };
             document.getElementById('intruder-location-display').innerText = found;
-            document.getElementById('intruder-material-display').innerText = finalMat;
-            document.getElementById('intruder-qty-input').value = '';
+            document.getElementById('intruder-material-display').innerText = mat;
             document.getElementById('intruder-modal-overlay').style.display = 'flex';
-            setTimeout(() => document.getElementById('intruder-qty-input').focus(), 100);
         }
 
-        function confirmIntruderSave() {
+        window.closeIntruderModal = () => document.getElementById('intruder-modal-overlay').style.display = 'none';
+
+        document.getElementById('btn-save-intruder').onclick = async () => {
             const qty = parseFloat(document.getElementById('intruder-qty-input').value);
             if (isNaN(qty)) return alert("Cantidad inválida");
-            const record = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), user: currentIntruderData.user, location: currentIntruderData.location, material: currentIntruderData.material, qty: qty, status: 'INTRUSO_UBI', doc: 'INTRUSO', theoretical: 0, diff: qty };
-            saveRecord(record);
+            const record = { id: Date.now(), date: new Date().toLocaleDateString(), user: currentIntruderData.user, location: currentIntruderData.ubi, material: currentIntruderData.mat, qty, theoretical: 0, status: 'INTRUSO_UBI', diff: qty };
+            await addDoc(collection(db, "conteos"), record);
             closeIntruderModal();
+            clearForm();
+        };
+
+        // --- CÁMARA ---
+        window.startCamera = async (target) => {
+            scanningTarget = document.getElementById(target);
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
+                document.getElementById('video').srcObject = stream;
+                document.getElementById('camera-container').style.display = 'block';
+                requestAnimationFrame(scanFrame);
+            } catch(e) { document.getElementById('scan-fallback').click(); }
+        };
+
+        function scanFrame() {
+            if (document.getElementById('camera-container').style.display === 'none') return;
+            const vid = document.getElementById('video');
+            if (barcodeDetector && vid.readyState === vid.HAVE_ENOUGH_DATA) {
+                barcodeDetector.detect(vid).then(codes => {
+                    if (codes.length > 0) {
+                        scanningTarget.value = codes[0].rawValue;
+                        stopCamera();
+                        playSound('beep');
+                        if (scanningTarget.id === 'location') document.getElementById('material').focus();
+                        else document.getElementById('qty').focus();
+                    }
+                });
+            }
+            requestAnimationFrame(scanFrame);
         }
 
-        function cleanString(str) { return str ? str.trim().toUpperCase() : ""; }
-        function clearForm() {
-            document.getElementById('location').value = '';
-            document.getElementById('material').value = '';
-            document.getElementById('qty').value = '';
-            document.getElementById('location').focus();
+        window.stopCamera = () => {
+            const vid = document.getElementById('video');
+            if (vid.srcObject) vid.srcObject.getTracks().forEach(t => t.stop());
+            document.getElementById('camera-container').style.display = 'none';
+        };
+
+        // --- UTILIDADES ---
+        function clearForm() { 
+            document.getElementById('location').value = ''; 
+            document.getElementById('material').value = ''; 
+            document.getElementById('qty').value = ''; 
+            document.getElementById('location').focus(); 
         }
-        function playSound(t) { 
-            const c=new(window.AudioContext||window.webkitAudioContext),o=c.createOscillator(),g=c.createGain();
-            o.connect(g);g.connect(c.destination);
-            if(t==='error'){o.type='sawtooth';o.frequency.value=150;g.gain.value=0.2;o.start();o.stop(c.currentTime+0.3);}
-            else{o.frequency.value=800;g.gain.value=0.1;o.start();o.stop(c.currentTime+0.1);}
+        function playSound(t) {
+            const c=new(window.AudioContext||window.webkitAudioContext), o=c.createOscillator(), g=c.createGain();
+            o.connect(g); g.connect(c.destination);
+            if(t==='error'){ o.type='sawtooth'; o.frequency.value=150; g.gain.value=0.2; o.start(); o.stop(c.currentTime+0.3); }
+            else{ o.frequency.value=800; g.gain.value=0.1; o.start(); o.stop(c.currentTime+0.1); }
         }
-        function switchView(v) {
+        window.switchView = (v) => {
             document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
             document.getElementById(`view-${v}`).classList.add('active');
-        }
+            document.querySelector(`[onclick="switchView('${v}')"]`).classList.add('active');
+        };
         function renderTable() {
-            const tbody = document.getElementById('records-body');
+            const body = document.getElementById('records-body');
             document.getElementById('count-badge').innerText = records.length;
-            const isAdmin = auth.currentUser?.email === ADMIN_EMAIL;
-            tbody.innerHTML = records.map(r => `<tr><td style="color:#666">${r.date}</td><td><b>${r.location}</b></td><td>${r.material}</td><td style="text-align:center; font-weight:bold">${r.qty}</td><td style="font-size:10px">${r.user}</td><td><span class="status-badge ${r.status==='OK'?'bg-ok':(r.status==='VACIO'?'bg-empty':'bg-err')}">${r.status}</span></td><td class="adm-only">${isAdmin ? `<button class="btn-delete" onclick="deleteRecord('${r.firebaseId}')">🗑️</button>` : ''}</td></tr>`).join('');
-            if(isAdmin) document.querySelectorAll('.adm-only').forEach(el => el.style.display = 'table-cell');
+            body.innerHTML = records.map(r => `<tr><td>${r.date}</td><td><b>${r.location}</b></td><td>${r.material}</td><td>${r.qty}</td><td>${r.user}</td><td><span class="status-badge ${r.status==='OK'?'bg-ok':'bg-err'}">${r.status}</span></td></tr>`).join('');
+        }
+        window.toggleRangeLock = () => {
+            intruderConfig.locked = !intruderConfig.locked;
+            localStorage.setItem('inv_config_v31', JSON.stringify(intruderConfig));
+            document.getElementById('intruder-start').disabled = intruderConfig.locked;
+            document.getElementById('intruder-end').disabled = intruderConfig.locked;
+            document.getElementById('btn-lock-range').innerText = intruderConfig.locked ? '🔒' : '🔓';
+        };
+
+        function setupAutoAdvance(id, nextId) {
+            document.getElementById(id).addEventListener('keydown', e => {
+                if(e.key === 'Enter') document.getElementById(nextId).focus();
+            });
         }
 
-        function checkLocation(ubi) {
-            if (records.some(r => r.location === ubi)) { showAlert('Duplicado', `Ubicación ${ubi} ya contada.`, null, true); playSound('error'); return false; }
-            const zone = document.getElementById('zone-filter').value.toUpperCase();
-            if (zone && !ubi.startsWith(zone)) { showAlert('Zona Incorrecta', `Ubicación no pertenece a zona ${zone}`, null, true); playSound('error'); return false; }
-            return true;
-        }
-
-        function showAlert(t, m, cb, err, intCB) {
-            document.getElementById('modal-title').innerText = t;
-            document.getElementById('modal-msg').innerText = m;
-            const box = document.getElementById('modal-box');
-            if(err) { box.classList.add('error-mode'); document.getElementById('modal-icon').innerText='⛔'; } else { box.classList.remove('error-mode'); document.getElementById('modal-icon').innerText='⚠️'; }
-            const btnConf = document.getElementById('modal-confirm-btn');
-            const btnInt = document.getElementById('modal-intruder-btn');
-            btnConf.style.display = cb ? 'block' : 'none'; btnConf.onclick = cb;
-            btnInt.style.display = intCB ? 'block' : 'none'; btnInt.onclick = intCB;
-            document.getElementById('modal-overlay').style.display = 'flex';
-        }
-        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-        function closeIntruderModal() { document.getElementById('intruder-modal-overlay').style.display = 'none'; }
-        function confirmSave() { if(pendingSaveData) { saveRecord(pendingSaveData); pendingSaveData=null; closeModal(); } }
-
-        async function deleteRecord(id) { if(confirm("¿Eliminar registro?")) await deleteDoc(doc(db, "conteos", id)); }
-        async function resetAllProtected() { if(confirm("⚠️ ¿BORRAR TODO EL HISTORIAL?")) { for(let r of records) await deleteDoc(doc(db, "conteos", r.firebaseId)); alert("Base de datos vaciada."); } }
-        function exportCSV() {
+        window.exportCSV = () => {
             let csv = "Fecha,Ubicacion,Material,Cantidad,Usuario,Estado\n";
             records.forEach(r => csv += `${r.date},${r.location},${r.material},${r.qty},${r.user},${r.status}\n`);
             const blob = new Blob([csv], {type: 'text/csv'});
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'inv.csv'; a.click();
-        }
-        function sendByEmail() { alert("Para usar email directo use la App de Correo con el CSV."); }
-        function toggleRangeLock() { intruderConfig.locked = !intruderConfig.locked; localStorage.setItem('inv_config_v31', JSON.stringify(intruderConfig)); loadIntruderConfig(); }
-        function loadIntruderConfig() { document.getElementById('intruder-start').disabled = intruderConfig.locked; document.getElementById('intruder-end').disabled = intruderConfig.locked; document.getElementById('btn-lock-range').innerText = intruderConfig.locked ? '🔒' : '🔓'; }
-        function setupAutoAdvance(id, nextId, type) {
-            document.getElementById(id).addEventListener('keydown', e => {
-                if(e.key === 'Enter' && e.target.value.trim()) {
-                    if(type==='location' && !checkLocation(cleanString(e.target.value))) return;
-                    if(type==='material') { verifyMaterialBeforeQty(() => document.getElementById(nextId).focus()); return; }
-                    if(type==='save') { validateAndSave(); return; }
-                    document.getElementById(nextId).focus();
-                }
-            });
-        }
+        };
 
-        async function startCamera(target) {
-            scanningTarget = document.getElementById(target);
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
-                const vid = document.getElementById('video');
-                vid.srcObject = stream;
-                document.getElementById('camera-container').style.display = 'block';
-                requestAnimationFrame(scanFrame);
-            } catch(e) { document.getElementById('scan-fallback').click(); }
-        }
-        function stopCamera() {
-            const vid = document.getElementById('video');
-            if(vid.srcObject) vid.srcObject.getTracks().forEach(t=>t.stop());
-            document.getElementById('camera-container').style.display = 'none';
-        }
-        async function handleFallbackImage(e) {
-            if(e.target.files[0] && barcodeDetector) {
-                try {
-                    const bmp = await createImageBitmap(e.target.files[0]);
-                    const codes = await barcodeDetector.detect(bmp);
-                    if(codes.length) {
-                        scanningTarget.value = codes[0].rawValue;
-                        playSound('beep');
-                        if(scanningTarget.id==='location') document.getElementById('material').focus();
-                    } else alert("No se detectó código");
-                } catch(err) { alert("Error imagen"); }
-            }
-        }
-        async function scanFrame() {
-            const vid = document.getElementById('video');
-            if(document.getElementById('camera-container').style.display==='none') return;
-            if(barcodeDetector) {
-                try {
-                    const codes = await barcodeDetector.detect(vid);
-                    if(codes.length) {
-                        scanningTarget.value = codes[0].rawValue;
-                        stopCamera();
-                        playSound('beep');
-                        if(scanningTarget.id==='location') {
-                            if(checkLocation(cleanString(scanningTarget.value))) document.getElementById('material').focus();
-                        } else verifyMaterialBeforeQty(()=>document.getElementById('qty').focus());
-                    }
-                } catch(e){}
-            }
-            requestAnimationFrame(scanFrame);
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLocalMaster();
+            setupAutoAdvance('location', 'material');
+            setupAutoAdvance('material', 'qty');
+
+            // Manifest dinámico actualizado para usar logo.png
+            const manifest = {
+                "name": "Inventario Cargo",
+                "short_name": "InvCargo",
+                "start_url": ".",
+                "display": "standalone",
+                "background_color": "#0D2334",
+                "theme_color": "#0D2334",
+                "icons": [
+                    { "src": "logo.png", "sizes": "192x192", "type": "image/png" },
+                    { "src": "logo.png", "sizes": "512x512", "type": "image/png" }
+                ]
+            };
+            const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = URL.createObjectURL(blob);
+            document.head.appendChild(link);
+        });
     </script>
 </body>
 </html>
