@@ -326,12 +326,13 @@
 
     <!-- LÓGICA JAVASCRIPT -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        // 1. IMPORTACIONES (VERSIÓN 10.13.1 ESTABLE)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-        // --- CONFIGURACIÓN FIREBASE (Tus Credenciales) ---
+        // 2. CONFIGURACIÓN FIREBASE (Copia exacta de tus capturas)
         const firebaseConfig = {
             apiKey: "AIzaSyDI2_dfJ5WBgCoddHPaXg40yrxEZqB4ZXI",
             authDomain: "inventarioapp-cddbe.firebaseapp.com",
@@ -346,6 +347,17 @@
         const storage = getStorage(app);
         const auth = getAuth(app);
 
+        // --- DEFINICIONES DE FUNCIONES AL INICIO (Para evitar error "not defined") ---
+        
+        let barcodeDetector = null;
+        async function checkBarcodeSupport() {
+             if ('BarcodeDetector' in window) {
+                 barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
+             } else {
+                 console.log("BarcodeDetector no soportado, se usará modo foto.");
+             }
+        }
+
         // --- VARIABLES GLOBALES ---
         const ADMIN_EMAIL = "lvilla@grupocargo.com";
         const EMAIL_RECIPIENTS = "lvilla@grupocargo.com,falvarado@grupocargo.com";
@@ -354,7 +366,6 @@
         let records = [];
         let intruderConfig = JSON.parse(localStorage.getItem('inv_config_v31')) || { start: 1, end: 300, locked: false };
         let scanningTarget = null;
-        let barcodeDetector = null;
         let pendingSaveData = null;
         let currentIntruderData = null;
 
@@ -377,10 +388,9 @@
 
         // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
-            checkBarcodeSupport(); // Función recuperada
+            checkBarcodeSupport(); 
             loadIntruderConfig();
             
-            // Configurar Listeners
             document.getElementById('scan-fallback').addEventListener('change', handleFallbackImage);
             document.getElementById('intruder-qty-input').addEventListener('keydown', (e) => { if(e.key === 'Enter') confirmIntruderSave(); });
             document.getElementById('btn-save-intruder').addEventListener('click', confirmIntruderSave);
@@ -394,32 +404,30 @@
             loadLocalMaster();
         });
 
-        // --- CÁMARA (API Barcode) ---
-        async function checkBarcodeSupport() {
-             if ('BarcodeDetector' in window) {
-                 barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
-             } else {
-                 console.log("BarcodeDetector no soportado, se usará modo foto.");
-             }
-        }
-
         // --- AUTHENTICATION ---
         async function loginUsuario() {
             let user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
             if (!user || !pass) return alert("Ingrese credenciales");
             
-            // Si el usuario escribió el correo completo, lo corregimos
-            if (user.includes('@')) {
-                user = user.split('@')[0];
+            // Corrección inteligente: Si escriben solo el nombre, agrega dominio
+            let email = user;
+            if (!user.includes('@')) {
+                email = `${user.toLowerCase()}@grupocargo.com`;
             }
 
-            const email = `${user.toLowerCase()}@grupocargo.com`;
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
             } catch (e) {
-                console.error(e);
-                alert("Error de acceso: " + e.code); // Muestra el error real (ej: user-not-found)
+                console.error("Login Error:", e);
+                // Manejo detallado de errores para ayudarte
+                if (e.code === 'auth/api-key-not-valid') {
+                    alert("⚠️ ERROR CRÍTICO DE CONFIGURACIÓN:\n\nFirebase rechazó tu 'API Key'.\n\nCAUSA MÁS PROBABLE: Tienes restricciones de dominio activadas en Google Cloud Console.\n\nSOLUCIÓN: Ve a la consola de Google Cloud -> Credenciales -> Tu clave API -> Restricciones de aplicación -> Agrega este dominio o quita las restricciones temporalmente.");
+                } else if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
+                    alert("Usuario o Contraseña incorrectos.");
+                } else {
+                    alert("Error de acceso: " + e.code); 
+                }
             }
         }
 
@@ -471,7 +479,8 @@
                 btn.innerHTML = "✅";
                 alert(`Maestro sincronizado: ${masterData.size} items.`);
             } catch (e) {
-                alert("Error descargando maestro. Verifique conexión.");
+                console.error(e);
+                alert("Error descargando maestro. Verifique conexión y permisos.");
                 btn.innerHTML = "☁️";
             }
         }
@@ -775,8 +784,6 @@
         }
 
         // --- CÁMARA ---
-        if ('BarcodeDetector' in window) barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
-        
         async function startCamera(target) {
             scanningTarget = document.getElementById(target);
             try {
