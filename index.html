@@ -326,15 +326,25 @@
 
     <!-- LÓGICA JAVASCRIPT -->
     <script type="module">
-        // 1. IMPORTACIONES (VERSIÓN 10.13.1 ESTABLE)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-        // 2. CONFIGURACIÓN FIREBASE (Copia exacta de tus capturas)
+        // --- DEFINICIONES DE FUNCIONES AL INICIO (Para evitar error "not defined") ---
+        
+        let barcodeDetector = null;
+        async function checkBarcodeSupport() {
+             if ('BarcodeDetector' in window) {
+                 try {
+                    barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
+                 } catch(e) { console.log("Error BarcodeDetector", e); }
+             }
+        }
+
+        // --- CONFIGURACIÓN DE PROYECTO ---
         const firebaseConfig = {
-            apiKey: "AIzaSyDI2_dfJ5WBgCoddHPaXg40yrxEZqB4ZXI",
+            apiKey: "BORRA_ESTO_Y_PEGA_TU_CLAVE_AQUI", // <--- ¡AQUÍ! Pega la clave nueva (Ej: AIzaSyD...)
             authDomain: "inventarioapp-cddbe.firebaseapp.com",
             projectId: "inventarioapp-cddbe",
             storageBucket: "inventarioapp-cddbe.firebasestorage.app",
@@ -346,17 +356,6 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
         const auth = getAuth(app);
-
-        // --- DEFINICIONES DE FUNCIONES AL INICIO (Para evitar error "not defined") ---
-        
-        let barcodeDetector = null;
-        async function checkBarcodeSupport() {
-             if ('BarcodeDetector' in window) {
-                 barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
-             } else {
-                 console.log("BarcodeDetector no soportado, se usará modo foto.");
-             }
-        }
 
         // --- VARIABLES GLOBALES ---
         const ADMIN_EMAIL = "lvilla@grupocargo.com";
@@ -388,29 +387,26 @@
 
         // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
-            checkBarcodeSupport(); 
+            checkBarcodeSupport();
             loadIntruderConfig();
             
             document.getElementById('scan-fallback').addEventListener('change', handleFallbackImage);
             document.getElementById('intruder-qty-input').addEventListener('keydown', (e) => { if(e.key === 'Enter') confirmIntruderSave(); });
             document.getElementById('btn-save-intruder').addEventListener('click', confirmIntruderSave);
             
-            // Auto avance
             setupAutoAdvance('location', 'material', 'location');
             setupAutoAdvance('material', 'qty', 'material');
             setupAutoAdvance('qty', 'SAVE', 'save');
 
-            // Cargar Maestro Local si existe
             loadLocalMaster();
         });
 
-        // --- AUTHENTICATION ---
+        // --- AUTH ---
         async function loginUsuario() {
             let user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
             if (!user || !pass) return alert("Ingrese credenciales");
             
-            // Corrección inteligente: Si escriben solo el nombre, agrega dominio
             let email = user;
             if (!user.includes('@')) {
                 email = `${user.toLowerCase()}@grupocargo.com`;
@@ -420,13 +416,12 @@
                 await signInWithEmailAndPassword(auth, email, pass);
             } catch (e) {
                 console.error("Login Error:", e);
-                // Manejo detallado de errores para ayudarte
                 if (e.code === 'auth/api-key-not-valid') {
-                    alert("⚠️ ERROR CRÍTICO DE CONFIGURACIÓN:\n\nFirebase rechazó tu 'API Key'.\n\nCAUSA MÁS PROBABLE: Tienes restricciones de dominio activadas en Google Cloud Console.\n\nSOLUCIÓN: Ve a la consola de Google Cloud -> Credenciales -> Tu clave API -> Restricciones de aplicación -> Agrega este dominio o quita las restricciones temporalmente.");
+                    alert("ERROR DE CONFIGURACIÓN:\n\nLa 'API Key' es incorrecta.\nPor favor, busca la clave en Google Cloud > Credenciales (Proyecto: inventarioapp-cddbe) y pégala en el código.");
                 } else if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
-                    alert("Usuario o Contraseña incorrectos.");
+                    alert("Usuario o contraseña incorrectos.");
                 } else {
-                    alert("Error de acceso: " + e.code); 
+                    alert("Error: " + e.code);
                 }
             }
         }
@@ -442,10 +437,8 @@
                 mainHeader.style.display = 'block';
                 document.getElementById('view-conteo').classList.add('active');
                 
-                // Mostrar nombre corto
                 document.getElementById('user-display').value = user.email.split('@')[0].toUpperCase();
 
-                // PERFIL ADM
                 const isAdmin = user.email === ADMIN_EMAIL;
                 document.querySelectorAll('.adm-only').forEach(el => el.style.display = isAdmin ? 'grid' : 'none');
                 if (isAdmin) document.getElementById('btn-cloud-master').style.display = 'flex';
@@ -542,13 +535,10 @@
             let finalDoc = '';
             let theoretical = 0;
 
-            // Caso 1: Ubicación Intruso
             if (ubi.startsWith("INV")) {
                 status = 'INTRUSO_UBI';
                 finalMaterial = matchMaterial(mat);
-            } 
-            // Caso 2: Ubicación Real
-            else {
+            } else {
                 const master = masterData.get(ubi);
                 if (!master) {
                     status = 'ERROR'; 
