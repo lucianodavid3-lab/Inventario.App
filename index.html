@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="icon" type="image/png" href="logo.png">
     
-    <title>Inventario Pro - V31.6</title>
+    <title>Inventario Pro - V31.8</title>
     <style>
         :root {
             --navy-main: #0D2334;
@@ -144,7 +144,7 @@
         <div class="login-box">
             <img src="logo.png" alt="Logo" class="login-logo" onerror="this.src='https://img.icons8.com/color/96/box--v1.png'">
             <h2>GRUPO CARGO</h2>
-            <span class="version-tag">SISTEMA INVENTARIO V31.6</span>
+            <span class="version-tag">SISTEMA INVENTARIO V31.8</span>
             <input type="text" id="login-user" placeholder="Usuario (ej: luciano)">
             <input type="password" id="login-pass" placeholder="Contraseña">
             <button class="btn btn-primary" onclick="loginUsuario()">INGRESAR</button>
@@ -165,7 +165,7 @@
 
     <div id="view-conteo" class="view active container">
         <div id="master-alert-box" style="background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; padding:12px; border-radius:10px; font-size:12px; margin-bottom:12px; display:flex; align-items:center; gap:10px;">
-            <span>⚠️</span> <div><strong>ATENCIÓN:</strong> Maestro no cargado. Toca la nube ☁️.</div>
+            <span>⚠️</span> <div><strong>ATENCIÓN:</strong> El maestro no está cargado. Toca la nube ☁️.</div>
         </div>
         <div id="master-success-box" style="display:none; background:#DCFCE7; border:1px solid #86EFAC; color:#166534; padding:12px; border-radius:10px; font-size:12px; margin-bottom:12px; align-items:center; gap:10px;">
             <span>✅</span> <div id="master-info-text">Maestro activo.</div>
@@ -235,13 +235,13 @@
             </div>
             <div class="card" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; padding: 10px;">
                 <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:10px; height: 40px;">CSV FULL</button>
-                <button class="btn btn-secondary" onclick="location.reload()" style="font-size:10px; height: 40px;">AUDITORÍA</button>
+                <button class="btn btn-secondary" onclick="location.reload()" style="font-size:10px; height: 40px;">REFRESCAR</button>
                 <button class="btn btn-danger-block" onclick="resetAllProtected()" style="font-size:10px; height: 40px;">BORRAR TODO</button>
             </div>
         </div>
 
         <div id="user-history-info" style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-align: center;">
-            Mostrando los últimos 100 registros.
+            Mostrando últimos 100 registros.
         </div>
 
         <div class="card" style="padding: 0; overflow: hidden;">
@@ -269,7 +269,6 @@
         </div>
     </div>
 
-    <!-- MODAL REGISTRO INTRUSO -->
     <div id="intruder-modal-overlay">
         <div class="modal-box">
             <div class="modal-title">ASIGNACIÓN INTRUSO</div>
@@ -284,10 +283,11 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, getDocs, writeBatch, query, limit } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
+        // --- CONFIGURACIÓN ---
         const firebaseConfig = {
             apiKey: "AIzaSyDI2_dfJ5WbGCoddHPaXg40yrxEZqB4ZXI",
             authDomain: "inventarioapp-cddbe.firebaseapp.com",
@@ -296,12 +296,13 @@
             messagingSenderId: "1091506863615",
             appId: "1:1091506863615:web:8b3f1fff3bca138b337bca"
         };
+        
+        const appIdActual = typeof __app_id !== 'undefined' ? __app_id : 'cargo-inv-v31';
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
         const auth = getAuth(app);
-        const appId = "cargo-inv-v31";
 
         const ADMIN_EMAIL = "lvilla@grupocargo.com";
         let masterData = new Map();
@@ -314,7 +315,6 @@
         let currentIntruderData = null;
         let originalPendingLocation = null;
 
-        // Estadísticas de consumo estimadas
         let estimatedReads = 0;
         let estimatedWrites = 0;
 
@@ -322,11 +322,17 @@
             barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
         }
 
-        // --- BLOQUEO DE REFRESCAR ---
+        // --- FUNCIONES GLOBALIZADAS ---
+        window.switchView = switchView;
+        window.closeModal = closeModal;
+        window.closeIntruderModal = closeIntruderModal;
+        window.clearForm = clearForm;
+
+        // --- ESCUDO ANTI-REFRESCO ---
         window.addEventListener('beforeunload', (e) => {
             if (auth.currentUser) {
                 e.preventDefault();
-                e.returnValue = "Al refrescar volverás a consumir lecturas de la base de datos. ¿Estás seguro?";
+                e.returnValue = "¿Seguro que quieres salir?";
             }
         });
 
@@ -334,7 +340,7 @@
         window.loginUsuario = async () => {
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
-            if (!user || !pass) return showAlert("DATOS INCOMPLETOS", "Por favor ingrese sus credenciales.", null, true);
+            if (!user || !pass) return showAlert("DATOS INCOMPLETOS", "Ingrese usuario y contraseña.", null, true);
             const email = user.includes('@') ? user : `${user.toLowerCase()}@grupocargo.com`;
             try { await signInWithEmailAndPassword(auth, email, pass); } 
             catch (e) { showAlert("FALLO DE ACCESO", "Usuario o contraseña incorrectos.", null, true); }
@@ -346,9 +352,7 @@
             if (user) {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-header').style.display = 'block';
-                document.getElementById('view-conteo').classList.add('active');
                 document.getElementById('user-display').value = user.email.split('@')[0].toUpperCase();
-                
                 const isAdmin = user.email === ADMIN_EMAIL;
                 document.querySelectorAll('.adm-only').forEach(el => el.style.display = isAdmin ? 'grid' : 'none');
                 if (isAdmin) document.getElementById('user-history-info').style.display = 'none';
@@ -362,26 +366,25 @@
         });
 
         function initRealtimeSync() {
-            // Path regla 1: /artifacts/{appId}/public/data/conteos
-            const collectionRef = collection(db, "artifacts", appId, "public", "data", "conteos");
+            if (!auth.currentUser) return;
+            const collRef = collection(db, "artifacts", appIdActual, "public", "data", "conteos");
             
-            onSnapshot(collectionRef, (snap) => {
-                const isFirstLoad = records.length === 0;
+            onSnapshot(collRef, (snap) => {
+                const isFirst = records.length === 0;
                 records = [];
                 snap.forEach(d => records.push({ firebaseId: d.id, ...d.data() }));
                 
-                // Estimar lecturas
-                if (isFirstLoad) {
-                    estimatedReads += snap.size; // Carga inicial
-                } else {
-                    estimatedReads += 1; // Un nuevo registro entró
-                }
+                if (isFirst) estimatedReads += snap.size;
+                else estimatedReads += 1;
                 updateStatsUI();
 
                 records.sort((a, b) => b.id - a.id);
                 renderTable();
             }, (err) => {
-                console.error("Error sync:", err);
+                console.error("Sync Error:", err);
+                if(err.code === 'permission-denied') {
+                    showAlert("ERROR DE PERMISOS", "Firebase rechazó la lectura. Revisa tus Rules en la consola.", null, true);
+                }
             });
         }
 
@@ -404,9 +407,9 @@
                 processMasterData(text);
                 btn.innerHTML = "✅";
                 playSound('success');
-                showAlert("ÉXITO", "Maestro sincronizado correctamente.\nNo consume lecturas de base de datos.", null, false);
+                showAlert("ÉXITO", "Maestro sincronizado.", null, false);
             } catch (e) {
-                showAlert("ERROR DE MAESTRO", "No se pudo bajar el archivo maestro.", null, true);
+                showAlert("ERROR STORAGE", "No se encontró el archivo maestro en la nube.", null, true);
                 btn.innerHTML = "☁️";
             }
         };
@@ -433,10 +436,12 @@
         function loadLocalMaster() {
             const stored = localStorage.getItem('inv_master_v31');
             if (stored) {
-                masterData = new Map(JSON.parse(stored));
-                MASTER_CODES.clear();
-                for (let [u, items] of masterData) items.forEach(i => MASTER_CODES.add(i.mat));
-                updateMasterUI();
+                try {
+                    masterData = new Map(JSON.parse(stored));
+                    MASTER_CODES.clear();
+                    for (let [u, items] of masterData) items.forEach(i => MASTER_CODES.add(i.mat));
+                    updateMasterUI();
+                } catch(e) { localStorage.removeItem('inv_master_v31'); }
             }
         }
 
@@ -460,12 +465,12 @@
                 return false;
             }
             if (records.some(r => r.location === ubi)) {
-                showAlert("UBICACIÓN DUPLICADA", `La ubicación ${ubi} ya fue contada.`, null, true);
+                showAlert("DUPLICADO", `Ubicación ${ubi} ya contada.`, null, true);
                 playSound('error');
                 return false;
             }
             if (!ubi.startsWith("INV") && masterData.size > 0 && !masterData.has(ubi)) {
-                showAlert("NO EXISTE EN MAESTRO", `La ubicación ${ubi} no figura en el archivo maestro.`, null, true);
+                showAlert("NO EXISTE", `La ubicación ${ubi} no figura en el maestro.`, null, true);
                 playSound('error');
                 return false;
             }
@@ -486,7 +491,7 @@
                     const expectedList = masterList.map(m => m.mat).join(" o ");
                     originalPendingLocation = ubi; 
                     showAlert("MATERIAL INESPERADO", 
-                        `El material leído (${mat}) no coincide con lo esperado (${expectedList}).\n\n¿Desea registrarlo igual o como un intruso?`, 
+                        `El material leído (${mat}) no coincide con (${expectedList}).\n\n¿Registrarlo igual o como intruso?`, 
                         onSuccess, 
                         true,
                         () => handleIntruderRegistration() 
@@ -498,7 +503,7 @@
         }
 
         window.validateAndSave = async () => {
-            if (masterData.size === 0) return showAlert("MAESTRO REQUERIDO", "Cargue el maestro primero.", null, true);
+            if (masterData.size === 0) return showAlert("SIN MAESTRO", "Baje el maestro primero.", null, true);
             const ubi = document.getElementById('location').value.trim().toUpperCase();
             const mat = document.getElementById('material').value.trim().toUpperCase();
             const qtyStr = document.getElementById('qty').value;
@@ -508,7 +513,7 @@
 
             if (!mat) {
                 const list = masterData.get(ubi);
-                if (!list) return showAlert("DATOS INCOMPLETOS", "Ingrese un material.", null, true);
+                if (!list) return showAlert("ERROR", "Ingrese material o ubicación INV.", null, true);
                 const mainMat = list[0].mat;
                 const diff = 0 - list[0].stock;
                 pendingSaveData = { 
@@ -519,11 +524,11 @@
                     theoretical: list[0].stock, storage: list[0].storage, doc: list[0].doc,
                     status: 'VACIO', diff: diff 
                 };
-                showAlert("CONFIRMAR VACÍO", `¿Registrar ${ubi} como VACÍA?\n(Cantidad 0)`, confirmSave, true);
+                showAlert("CONFIRMAR VACÍO", `¿Registrar ${ubi} como VACÍA?`, confirmSave, true);
                 return;
             }
 
-            if (isNaN(qty)) return showAlert("CANTIDAD INVÁLIDA", "Ingrese un número válido.", null, true);
+            if (isNaN(qty)) return showAlert("DATOS INVÁLIDOS", "Ingrese cantidad numérica.", null, true);
 
             verifyMaterialBeforeQty(() => {
                 let status = 'OK', theoretical = 0, diff = 0, finalMat = mat, st='', dc='';
@@ -553,29 +558,42 @@
         };
 
         async function saveRecord(record) {
+            if (!auth.currentUser) return showAlert("SIN SESIÓN", "Inicie sesión nuevamente.", null, true);
             try {
-                const collectionRef = collection(db, "artifacts", appId, "public", "data", "conteos");
-                await addDoc(collectionRef, record);
+                const collRef = collection(db, "artifacts", appIdActual, "public", "data", "conteos");
+                await addDoc(collRef, record);
                 estimatedWrites++;
                 updateStatsUI();
                 playSound('success');
                 clearForm();
-            } catch(e) { showAlert("FALLO DE NUBE", "Error al guardar.", null, true); }
+            } catch(e) { 
+                console.error("Save Error:", e);
+                showAlert("FALLO DE NUBE", `ERROR TÉCNICO: ${e.code || 'Desconocido'}\nSi dice 'permission-denied', revisa las reglas de Firestore.`, null, true); 
+            }
         }
 
         function confirmSave() { if(pendingSaveData) { saveRecord(pendingSaveData); pendingSaveData=null; closeModal(); } }
 
+        function clearForm() {
+            try {
+                document.getElementById('location').value = '';
+                document.getElementById('material').value = '';
+                document.getElementById('qty').value = '';
+                document.getElementById('location').focus();
+            } catch(e) {}
+        }
+
         // --- INTRUSOS ---
         function handleIntruderRegistration() {
             closeModal();
-            const start = intruderConfig.locked ? intruderConfig.start : parseInt(document.getElementById('intruder-start').value);
-            const end = intruderConfig.locked ? intruderConfig.end : parseInt(document.getElementById('intruder-end').value);
+            const start = intruderConfig.locked ? intruderConfig.start : (parseInt(document.getElementById('intruder-start').value) || 1);
+            const end = intruderConfig.locked ? intruderConfig.end : (parseInt(document.getElementById('intruder-end').value) || 300);
             let found = null;
             for(let i = start; i <= end; i++) {
                 const cand = "INV" + String(i).padStart(3, '0');
                 if (!records.some(r => r.location === cand)) { found = cand; break; }
             }
-            if (!found) return showAlert("SIN HUECOS", "No hay INV disponibles.", null, true);
+            if (!found) return showAlert("SIN HUECOS", "No hay huecos INV libres.", null, true);
             
             const mat = document.getElementById('material').value.trim().toUpperCase();
             currentIntruderData = { ubi: found, mat };
@@ -583,10 +601,10 @@
             document.getElementById('intruder-material-display').innerText = mat;
             document.getElementById('intruder-qty-input').value = '';
             document.getElementById('intruder-modal-overlay').style.display = 'flex';
-            setTimeout(() => document.getElementById('intruder-qty-input').focus(), 150);
+            setTimeout(() => document.getElementById('intruder-qty-input').focus(), 250);
         }
 
-        window.closeIntruderModal = () => { document.getElementById('intruder-modal-overlay').style.display = 'none'; currentIntruderData = null; };
+        function closeIntruderModal() { document.getElementById('intruder-modal-overlay').style.display = 'none'; currentIntruderData = null; }
 
         document.getElementById('btn-save-intruder').onclick = async () => {
             const qty = parseFloat(document.getElementById('intruder-qty-input').value);
@@ -615,7 +633,7 @@
 
         // --- CÁMARA ---
         window.startCamera = async (target) => {
-            if(masterData.size === 0) return showAlert("CARGUE MAESTRO", "Sincronice el maestro primero.", null, true);
+            if(masterData.size === 0) return showAlert("CARGUE MAESTRO", "Primero baje el maestro.", null, true);
             scanningTarget = document.getElementById(target);
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
@@ -648,37 +666,30 @@
 
         window.stopCamera = () => {
             const vid = document.getElementById('video');
-            if (vid.srcObject) vid.srcObject.getTracks().forEach(t => t.stop());
+            if (vid && vid.srcObject) vid.srcObject.getTracks().forEach(t => t.stop());
             document.getElementById('camera-container').style.display = 'none';
         };
 
-        // --- GESTOS SWIPE ---
-        let touchStartX = 0;
-        document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, {passive: true});
-        document.addEventListener('touchend', e => {
-            const touchEndX = e.changedTouches[0].screenX;
-            if (touchStartX - touchEndX > 120) switchView('historial'); 
-            if (touchEndX - touchStartX > 120) switchView('conteo'); 
-        }, {passive: true});
-
-        // --- ACCIONES ADM ---
+        // --- ADM ---
         window.deleteRecord = async (id) => {
-            showAlert("¿ELIMINAR?", "Se quitará del servidor.", () => {
-                const docRef = doc(db, "artifacts", appId, "public", "data", "conteos", id);
+            showAlert("¿ELIMINAR?", "Se borrará del servidor.", () => {
+                const docRef = doc(db, "artifacts", appIdActual, "public", "data", "conteos", id);
                 deleteDoc(docRef).catch(() => showAlert("ERROR", "No se pudo eliminar.", null, true));
             }, true);
         };
 
         window.resetAllProtected = async () => {
-            showAlert("⚠️ ACCIÓN DESTRUCTIVA", "¿Borrar TODO el historial de la nube?", () => {
-                const pwd = prompt("Contraseña de supervisor:");
+            showAlert("⚠️ BORRADO TOTAL", "¿Vaciar toda la nube?", async () => {
+                const pwd = prompt("Clave Supervisor:");
                 if(pwd === "cargo123") {
-                    const collectionRef = collection(db, "artifacts", appId, "public", "data", "conteos");
-                    getDocs(collectionRef).then(snap => {
+                    try {
+                        const collRef = collection(db, "artifacts", appIdActual, "public", "data", "conteos");
+                        const snap = await getDocs(collRef);
                         const batch = writeBatch(db);
                         snap.forEach(d => batch.delete(d.ref));
-                        batch.commit().then(() => showAlert("LISTO", "Nube vaciada.", null, false));
-                    });
+                        await batch.commit();
+                        showAlert("ÉXITO", "Base de datos limpia.", null, false);
+                    } catch(e) { showAlert("ERROR", "No se pudo borrar todo.", null, true); }
                 } else if (pwd !== null) { showAlert("ERROR", "Clave incorrecta.", null, true); }
             }, true);
         };
@@ -686,33 +697,30 @@
         window.toggleRangeLock = () => {
             intruderConfig.locked = !intruderConfig.locked;
             localStorage.setItem('inv_config_v31', JSON.stringify(intruderConfig));
-            document.getElementById('intruder-start').disabled = intruderConfig.locked;
-            document.getElementById('intruder-end').disabled = intruderConfig.locked;
-            document.getElementById('btn-lock-range').innerText = intruderConfig.locked ? '🔒 BLOQ' : '🔓 FIJAR';
-            document.getElementById('btn-lock-range').className = intruderConfig.locked ? 'btn-lock locked' : 'btn-lock';
+            const s = document.getElementById('intruder-start');
+            const e = document.getElementById('intruder-end');
+            const b = document.getElementById('btn-lock-range');
+            if(s) s.disabled = intruderConfig.locked;
+            if(e) e.disabled = intruderConfig.locked;
+            if(b) {
+                b.innerText = intruderConfig.locked ? '🔒 BLOQ' : '🔓 FIJAR';
+                b.className = intruderConfig.locked ? 'btn-lock locked' : 'btn-lock';
+            }
         };
 
-        // --- UTILIDADES ---
-        function clearForm() { document.querySelectorAll('.card input').forEach(i => { if(!i.disabled && i.id !== 'zone-filter') i.value = ''; }); document.getElementById('location').focus(); }
-        function playSound(t) {
-            const c=new(window.AudioContext||window.webkitAudioContext)(), o=c.createOscillator(), g=c.createGain();
-            o.connect(g); g.connect(c.destination);
-            if(t==='error'){ o.type='sawtooth'; o.frequency.value=150; g.gain.value=0.2; o.start(); o.stop(c.currentTime+0.3); }
-            else{ o.frequency.value=800; g.gain.value=0.1; o.start(); o.stop(c.currentTime+0.1); }
-        }
-        window.switchView = (v) => {
+        function switchView(v) {
             document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
-            document.getElementById(`view-${v}`).classList.add('active');
-            document.getElementById(`tab-${v}`).classList.add('active');
-        };
+            const target = document.getElementById(`view-${v}`);
+            if(target) target.classList.add('active');
+            const tab = document.getElementById(`tab-${v}`);
+            if(tab) tab.classList.add('active');
+        }
 
         function renderTable() {
             const body = document.getElementById('records-body');
             document.getElementById('count-badge').innerText = records.length;
             const isAdmin = auth.currentUser?.email === ADMIN_EMAIL;
-            
-            // FILTRO DE 100 REGISTROS PARA USUARIOS
             const displayData = isAdmin ? records : records.slice(0, 100);
 
             body.innerHTML = displayData.map(r => `
@@ -730,13 +738,16 @@
         }
 
         window.exportCSV = () => {
-            if(!records.length) return showAlert("VACÍO", "No hay datos.", null, false);
+            if(!records.length) return showAlert("SIN DATOS", "No hay registros.", null, false);
             let csv = "Fecha,Hora,Usuario,Ubicacion,Material,Doc_Inventario,Storage,Stock_Teorico,Stock_Fisico,Diferencia,Estado\n";
             records.forEach(r => {
                 csv += `${r.date},${r.time||''},${r.user},${r.location},${r.material},${r.doc||''},${r.storage||''},${r.theoretical??''},${r.qty},${r.diff??''},${r.status}\n`;
             });
             const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Inventario_Final_${Date.now()}.csv`; a.click();
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = `Inventario_Cargo_${Date.now()}.csv`; 
+            a.click();
         };
 
         function showAlert(title, msg, confirmCb, isError = false, intruderCb = null) {
@@ -757,7 +768,7 @@
                 btnOk.style.display = 'none'; btnCancel.style.display = 'block';
                 btnConfirm.style.display = confirmCb ? 'block' : 'none';
                 if(confirmCb) {
-                    btnConfirm.innerText = title === "CONFIRMAR VACÍO" ? "SÍ, ESTÁ VACÍA" : "SÍ, GUARDAR IGUAL";
+                    btnConfirm.innerText = title.includes("VACÍO") ? "SÍ, ESTÁ VACÍA" : "SÍ, GUARDAR IGUAL";
                     btnConfirm.onclick = () => { confirmCb(); closeModal(); };
                 }
                 btnIntruder.style.display = intruderCb ? 'block' : 'none';
@@ -765,11 +776,18 @@
             }
             document.getElementById('modal-overlay').style.display = 'flex';
         }
-        window.closeModal = () => document.getElementById('modal-overlay').style.display = 'none';
+
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+        function playSound(t) {
+            const c=new(window.AudioContext||window.webkitAudioContext)(), o=c.createOscillator(), g=c.createGain();
+            o.connect(g); g.connect(c.destination);
+            if(t==='error'){ o.type='sawtooth'; o.frequency.value=150; g.gain.value=0.2; o.start(); o.stop(c.currentTime+0.3); }
+            else{ o.frequency.value=800; g.gain.value=0.1; o.start(); o.stop(c.currentTime+0.1); }
+        }
 
         document.getElementById('location').addEventListener('keydown', e => { if(e.key === 'Enter') { if(checkLocation(e.target.value.toUpperCase())) document.getElementById('material').focus(); } });
         document.getElementById('material').addEventListener('keydown', e => { if(e.key === 'Enter') { verifyMaterialBeforeQty(() => document.getElementById('qty').focus()); } });
-        document.getElementById('qty').addEventListener('keydown', e => { if(e.key === 'Enter') validateAndSave(); });
+        document.getElementById('qty').addEventListener('keydown', e => { if(e.key === 'Enter') window.validateAndSave(); });
 
         document.addEventListener('DOMContentLoaded', () => {
             if(intruderConfig.locked) {
