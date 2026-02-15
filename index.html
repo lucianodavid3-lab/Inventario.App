@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="icon" type="image/png" href="logo.png">
     
-    <title>Inventario Pro - V31.8</title>
+    <title>Inventario Pro - V31.10</title>
     <style>
         :root {
             --navy-main: #0D2334;
@@ -144,7 +144,7 @@
         <div class="login-box">
             <img src="logo.png" alt="Logo" class="login-logo" onerror="this.src='https://img.icons8.com/color/96/box--v1.png'">
             <h2>GRUPO CARGO</h2>
-            <span class="version-tag">SISTEMA INVENTARIO V31.8</span>
+            <span class="version-tag">SISTEMA INVENTARIO V31.10</span>
             <input type="text" id="login-user" placeholder="Usuario (ej: luciano)">
             <input type="password" id="login-pass" placeholder="Contraseña">
             <button class="btn btn-primary" onclick="loginUsuario()">INGRESAR</button>
@@ -215,7 +215,7 @@
                 <input type="number" id="qty" placeholder="0" inputmode="numeric">
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 5px;">
-                <button class="btn btn-secondary" onclick="clearForm()">LIMPIAR</button>
+                <button class="btn btn-secondary" onclick="window.clearForm()">LIMPIAR</button>
                 <button class="btn btn-primary" onclick="validateAndSave()">GUARDAR</button>
             </div>
         </div>
@@ -226,7 +226,7 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <span class="stat-val" id="reads-count">0</span>
-                    <span class="stat-lbl">Lecturas Hoy</span>
+                    <span class="stat-lbl">Lecturas Estimadas</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-val" id="writes-count">0</span>
@@ -248,7 +248,7 @@
             <div class="table-wrap">
                 <table id="records-table">
                     <thead>
-                        <tr><th>Fecha/Hora</th><th>Ubi</th><th>Mat</th><th>Cant</th><th>User</th><th>Estado</th><th class="adm-only"></th></tr>
+                        <tr><th>Fecha/Hora</th><th>Ubi</th><th>Mat</th><th>Cant</th><th>Operario</th><th>Estado</th><th class="adm-only"></th></tr>
                     </thead>
                     <tbody id="records-body"></tbody>
                 </table>
@@ -285,11 +285,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, getDocs, writeBatch, query, limit } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-        // --- CONFIGURACIÓN ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyDI2_dfJ5WbGCoddHPaXg40yrxEZqB4ZXI",
+        // --- CONFIGURACIÓN E ID DE APP ---
+        // Usar variables de entorno si están disponibles (Regla 1 y 3)
+        const envConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDI2_dfJ5WBgCoddHPaXg40yrxEZqB4ZXI",
             authDomain: "inventarioapp-cddbe.firebaseapp.com",
             projectId: "inventarioapp-cddbe",
             storageBucket: "inventarioapp-cddbe.firebasestorage.app",
@@ -299,7 +300,7 @@
         
         const appIdActual = typeof __app_id !== 'undefined' ? __app_id : 'cargo-inv-v31';
 
-        const app = initializeApp(firebaseConfig);
+        const app = initializeApp(envConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
         const auth = getAuth(app);
@@ -322,21 +323,60 @@
             barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
         }
 
-        // --- FUNCIONES GLOBALIZADAS ---
-        window.switchView = switchView;
-        window.closeModal = closeModal;
-        window.closeIntruderModal = closeIntruderModal;
-        window.clearForm = clearForm;
+        // --- DEFINICIÓN DE FUNCIONES GLOBALES PARA window ---
+        
+        window.closeModal = () => {
+            document.getElementById('modal-overlay').style.display = 'none';
+        };
+
+        window.closeIntruderModal = () => {
+            document.getElementById('intruder-modal-overlay').style.display = 'none';
+            currentIntruderData = null;
+        };
+
+        window.switchView = (v) => {
+            document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+            const target = document.getElementById(`view-${v}`);
+            if(target) target.classList.add('active');
+            const tab = document.getElementById(`tab-${v}`);
+            if(tab) tab.classList.add('active');
+        };
+
+        window.clearForm = () => {
+            try {
+                const locInput = document.getElementById('location');
+                const matInput = document.getElementById('material');
+                const qtyInput = document.getElementById('qty');
+                if(locInput) locInput.value = '';
+                if(matInput) matInput.value = '';
+                if(qtyInput) qtyInput.value = '';
+                if(locInput) locInput.focus();
+            } catch(e) { console.error("Error al limpiar:", e); }
+        };
 
         // --- ESCUDO ANTI-REFRESCO ---
         window.addEventListener('beforeunload', (e) => {
             if (auth.currentUser) {
                 e.preventDefault();
-                e.returnValue = "¿Seguro que quieres salir?";
+                e.returnValue = "¿Seguro que quieres salir? Se consumirán lecturas extras de base de datos.";
             }
         });
 
-        // --- AUTH ---
+        // --- AUTH (Regla 3) ---
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch(e) {
+                console.warn("Auth Error:", e.code);
+            }
+        };
+
+        // --- LOGIN ---
         window.loginUsuario = async () => {
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
@@ -350,18 +390,27 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-header').style.display = 'block';
-                document.getElementById('user-display').value = user.email.split('@')[0].toUpperCase();
+                const loginScr = document.getElementById('login-screen');
+                const mainHdr = document.getElementById('main-header');
+                if(loginScr) loginScr.style.display = 'none';
+                if(mainHdr) mainHdr.style.display = 'block';
+                
+                const userDisplay = document.getElementById('user-display');
+                if(userDisplay) userDisplay.value = (user.email ? user.email.split('@')[0] : 'ANONIMO').toUpperCase();
+                
                 const isAdmin = user.email === ADMIN_EMAIL;
                 document.querySelectorAll('.adm-only').forEach(el => el.style.display = isAdmin ? 'grid' : 'none');
-                if (isAdmin) document.getElementById('user-history-info').style.display = 'none';
+                
+                const userHistoryInfo = document.getElementById('user-history-info');
+                if (isAdmin && userHistoryInfo) userHistoryInfo.style.display = 'none';
 
                 initRealtimeSync();
                 loadLocalMaster(); 
             } else {
-                document.getElementById('login-screen').style.display = 'flex';
-                document.getElementById('main-header').style.display = 'none';
+                const loginScr = document.getElementById('login-screen');
+                const mainHdr = document.getElementById('main-header');
+                if(loginScr) loginScr.style.display = 'flex';
+                if(mainHdr) mainHdr.style.display = 'none';
             }
         });
 
@@ -383,7 +432,7 @@
             }, (err) => {
                 console.error("Sync Error:", err);
                 if(err.code === 'permission-denied') {
-                    showAlert("ERROR DE PERMISOS", "Firebase rechazó la lectura. Revisa tus Rules en la consola.", null, true);
+                    showAlert("REVISA TUS REGLAS", "Firebase ha bloqueado el acceso. Verifique las reglas Firestore.", null, true);
                 }
             });
         }
@@ -409,7 +458,7 @@
                 playSound('success');
                 showAlert("ÉXITO", "Maestro sincronizado.", null, false);
             } catch (e) {
-                showAlert("ERROR STORAGE", "No se encontró el archivo maestro en la nube.", null, true);
+                showAlert("ERROR STORAGE", "No se encontró el archivo maestro.", null, true);
                 btn.innerHTML = "☁️";
             }
         };
@@ -448,19 +497,23 @@
         function updateMasterUI() {
             let total = 0;
             masterData.forEach(list => total += list.length);
+            const alertBox = document.getElementById('master-alert-box');
+            const successBox = document.getElementById('master-success-box');
+            const infoText = document.getElementById('master-info-text');
+
             if (total > 0) {
-                document.getElementById('master-alert-box').style.display = 'none';
-                document.getElementById('master-success-box').style.display = 'flex';
-                document.getElementById('master-info-text').innerText = `Maestro activo: ${total} registros.`;
+                if(alertBox) alertBox.style.display = 'none';
+                if(successBox) successBox.style.display = 'flex';
+                if(infoText) infoText.innerText = `Maestro activo: ${total} registros.`;
             }
         }
 
         // --- VALIDACIONES ---
-        function checkLocation(ubi) {
+        window.checkLocation = (ubi) => {
             if (!ubi) return false;
             const zone = document.getElementById('zone-filter').value.toUpperCase();
             if (zone && !ubi.startsWith(zone)) {
-                showAlert("ZONA INCORRECTA", `La ubicación ${ubi} no pertenece a la zona ${zone}.`, null, true);
+                showAlert("ZONA INCORRECTA", `La ubicación ${ubi} no es de la zona ${zone}.`, null, true);
                 playSound('error');
                 return false;
             }
@@ -470,14 +523,14 @@
                 return false;
             }
             if (!ubi.startsWith("INV") && masterData.size > 0 && !masterData.has(ubi)) {
-                showAlert("NO EXISTE", `La ubicación ${ubi} no figura en el maestro.`, null, true);
+                showAlert("NO EXISTE", `Ubicación ${ubi} desconocida en el maestro.`, null, true);
                 playSound('error');
                 return false;
             }
             return true;
-        }
+        };
 
-        function verifyMaterialBeforeQty(onSuccess) {
+        window.verifyMaterialBeforeQty = (onSuccess) => {
             const ubi = document.getElementById('location').value.trim().toUpperCase();
             const mat = document.getElementById('material').value.trim().toUpperCase();
             if (!mat) return;
@@ -500,7 +553,7 @@
                 }
             }
             onSuccess();
-        }
+        };
 
         window.validateAndSave = async () => {
             if (masterData.size === 0) return showAlert("SIN MAESTRO", "Baje el maestro primero.", null, true);
@@ -509,17 +562,17 @@
             const qtyStr = document.getElementById('qty').value;
             const qty = parseFloat(qtyStr);
 
-            if (!checkLocation(ubi)) return;
+            if (!window.checkLocation(ubi)) return;
 
             if (!mat) {
                 const list = masterData.get(ubi);
-                if (!list) return showAlert("ERROR", "Ingrese material o ubicación INV.", null, true);
+                if (!list) return showAlert("ERROR", "Ingrese material.", null, true);
                 const mainMat = list[0].mat;
                 const diff = 0 - list[0].stock;
                 pendingSaveData = { 
                     id: Date.now(), date: new Date().toLocaleDateString(), 
                     time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                    user: auth.currentUser.email.split('@')[0].toUpperCase(), 
+                    user: (auth.currentUser.email ? auth.currentUser.email.split('@')[0] : 'ANON').toUpperCase(), 
                     location: ubi, material: mainMat, qty: 0, 
                     theoretical: list[0].stock, storage: list[0].storage, doc: list[0].doc,
                     status: 'VACIO', diff: diff 
@@ -528,9 +581,9 @@
                 return;
             }
 
-            if (isNaN(qty)) return showAlert("DATOS INVÁLIDOS", "Ingrese cantidad numérica.", null, true);
+            if (isNaN(qty)) return showAlert("CANTIDAD INVÁLIDA", "Ingrese número válido.", null, true);
 
-            verifyMaterialBeforeQty(() => {
+            window.verifyMaterialBeforeQty(() => {
                 let status = 'OK', theoretical = 0, diff = 0, finalMat = mat, st='', dc='';
                 if (ubi.startsWith("INV")) {
                     status = 'INTRUSO_UBI';
@@ -549,7 +602,7 @@
                 const record = { 
                     id: Date.now(), date: new Date().toLocaleDateString(), 
                     time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                    user: auth.currentUser.email.split('@')[0].toUpperCase(), 
+                    user: (auth.currentUser.email ? auth.currentUser.email.split('@')[0] : 'ANON').toUpperCase(), 
                     location: ubi, material: finalMat, qty, theoretical, storage: st, doc: dc, status, diff 
                 };
                 saveRecord(record);
@@ -565,27 +618,18 @@
                 estimatedWrites++;
                 updateStatsUI();
                 playSound('success');
-                clearForm();
+                window.clearForm();
             } catch(e) { 
                 console.error("Save Error:", e);
-                showAlert("FALLO DE NUBE", `ERROR TÉCNICO: ${e.code || 'Desconocido'}\nSi dice 'permission-denied', revisa las reglas de Firestore.`, null, true); 
+                showAlert("FALLO DE NUBE", `ERROR TÉCNICO: ${e.code || 'Desconocido'}`, null, true); 
             }
         }
 
-        function confirmSave() { if(pendingSaveData) { saveRecord(pendingSaveData); pendingSaveData=null; closeModal(); } }
-
-        function clearForm() {
-            try {
-                document.getElementById('location').value = '';
-                document.getElementById('material').value = '';
-                document.getElementById('qty').value = '';
-                document.getElementById('location').focus();
-            } catch(e) {}
-        }
+        function confirmSave() { if(pendingSaveData) { saveRecord(pendingSaveData); pendingSaveData=null; window.closeModal(); } }
 
         // --- INTRUSOS ---
         function handleIntruderRegistration() {
-            closeModal();
+            window.closeModal();
             const start = intruderConfig.locked ? intruderConfig.start : (parseInt(document.getElementById('intruder-start').value) || 1);
             const end = intruderConfig.locked ? intruderConfig.end : (parseInt(document.getElementById('intruder-end').value) || 300);
             let found = null;
@@ -593,27 +637,29 @@
                 const cand = "INV" + String(i).padStart(3, '0');
                 if (!records.some(r => r.location === cand)) { found = cand; break; }
             }
-            if (!found) return showAlert("SIN HUECOS", "No hay huecos INV libres.", null, true);
+            if (!found) return showAlert("SIN HUECOS", "Sin INV libres.", null, true);
             
             const mat = document.getElementById('material').value.trim().toUpperCase();
             currentIntruderData = { ubi: found, mat };
-            document.getElementById('intruder-location-display').innerText = found;
-            document.getElementById('intruder-material-display').innerText = mat;
-            document.getElementById('intruder-qty-input').value = '';
+            const locDisp = document.getElementById('intruder-location-display');
+            const matDisp = document.getElementById('intruder-material-display');
+            const qtyInp = document.getElementById('intruder-qty-input');
+            if(locDisp) locDisp.innerText = found;
+            if(matDisp) matDisp.innerText = mat;
+            if(qtyInp) qtyInp.value = '';
             document.getElementById('intruder-modal-overlay').style.display = 'flex';
-            setTimeout(() => document.getElementById('intruder-qty-input').focus(), 250);
+            setTimeout(() => { if(qtyInp) qtyInp.focus(); }, 250);
         }
 
-        function closeIntruderModal() { document.getElementById('intruder-modal-overlay').style.display = 'none'; currentIntruderData = null; }
-
         document.getElementById('btn-save-intruder').onclick = async () => {
-            const qty = parseFloat(document.getElementById('intruder-qty-input').value);
-            if (isNaN(qty)) return showAlert("ERROR", "Ingrese cantidad válida.", null, true);
+            const qtyVal = document.getElementById('intruder-qty-input').value;
+            const qty = parseFloat(qtyVal);
+            if (isNaN(qty)) return showAlert("ERROR", "Cantidad inválida.", null, true);
             
             const record = { 
                 id: Date.now(), date: new Date().toLocaleDateString(), 
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                user: auth.currentUser.email.split('@')[0].toUpperCase(), 
+                user: (auth.currentUser.email ? auth.currentUser.email.split('@')[0] : 'ANON').toUpperCase(), 
                 location: currentIntruderData.ubi, material: currentIntruderData.mat, 
                 qty, theoretical: 0, storage: '', doc: 'INTRUSO', status: 'INTRUSO_UBI', diff: qty 
             };
@@ -621,12 +667,14 @@
             await saveRecord(record);
             
             const nextUbi = originalPendingLocation;
-            closeIntruderModal();
-            clearForm();
+            window.closeIntruderModal();
+            window.clearForm();
             
             if (nextUbi) {
-                document.getElementById('location').value = nextUbi;
-                document.getElementById('material').focus();
+                const locInp = document.getElementById('location');
+                const matInp = document.getElementById('material');
+                if(locInp) locInp.value = nextUbi;
+                if(matInp) matInp.focus();
                 originalPendingLocation = null;
             }
         };
@@ -651,12 +699,12 @@
                     if (codes.length > 0) {
                         const code = codes[0].rawValue.trim().toUpperCase();
                         scanningTarget.value = code;
-                        stopCamera();
+                        window.stopCamera();
                         playSound('beep');
                         if (scanningTarget.id === 'location') {
-                            if(checkLocation(code)) document.getElementById('material').focus();
+                            if(window.checkLocation(code)) document.getElementById('material').focus();
                         } else {
-                            verifyMaterialBeforeQty(() => document.getElementById('qty').focus());
+                            window.verifyMaterialBeforeQty(() => document.getElementById('qty').focus());
                         }
                     }
                 });
@@ -672,7 +720,7 @@
 
         // --- ADM ---
         window.deleteRecord = async (id) => {
-            showAlert("¿ELIMINAR?", "Se borrará del servidor.", () => {
+            showAlert("¿ELIMINAR?", "Se borrará permanentemente.", () => {
                 const docRef = doc(db, "artifacts", appIdActual, "public", "data", "conteos", id);
                 deleteDoc(docRef).catch(() => showAlert("ERROR", "No se pudo eliminar.", null, true));
             }, true);
@@ -688,8 +736,8 @@
                         const batch = writeBatch(db);
                         snap.forEach(d => batch.delete(d.ref));
                         await batch.commit();
-                        showAlert("ÉXITO", "Base de datos limpia.", null, false);
-                    } catch(e) { showAlert("ERROR", "No se pudo borrar todo.", null, true); }
+                        showAlert("ÉXITO", "Nube limpia.", null, false);
+                    } catch(e) { showAlert("ERROR", "Fallo al borrar.", null, true); }
                 } else if (pwd !== null) { showAlert("ERROR", "Clave incorrecta.", null, true); }
             }, true);
         };
@@ -708,18 +756,10 @@
             }
         };
 
-        function switchView(v) {
-            document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
-            const target = document.getElementById(`view-${v}`);
-            if(target) target.classList.add('active');
-            const tab = document.getElementById(`tab-${v}`);
-            if(tab) tab.classList.add('active');
-        }
-
         function renderTable() {
             const body = document.getElementById('records-body');
-            document.getElementById('count-badge').innerText = records.length;
+            const badge = document.getElementById('count-badge');
+            if(badge) badge.innerText = records.length;
             const isAdmin = auth.currentUser?.email === ADMIN_EMAIL;
             const displayData = isAdmin ? records : records.slice(0, 100);
 
@@ -760,7 +800,8 @@
             const btnOk = document.getElementById('modal-ok-btn');
 
             box.className = isError ? 'modal-box error-mode' : 'modal-box';
-            document.getElementById('modal-icon').innerText = isError ? '⛔' : '⚠️';
+            const icon = document.getElementById('modal-icon');
+            if(icon) icon.innerText = isError ? '⛔' : '⚠️';
             
             if(!confirmCb && !intruderCb) {
                 btnConfirm.style.display = 'none'; btnIntruder.style.display = 'none'; btnCancel.style.display = 'none'; btnOk.style.display = 'block';
@@ -769,7 +810,7 @@
                 btnConfirm.style.display = confirmCb ? 'block' : 'none';
                 if(confirmCb) {
                     btnConfirm.innerText = title.includes("VACÍO") ? "SÍ, ESTÁ VACÍA" : "SÍ, GUARDAR IGUAL";
-                    btnConfirm.onclick = () => { confirmCb(); closeModal(); };
+                    btnConfirm.onclick = () => { confirmCb(); window.closeModal(); };
                 }
                 btnIntruder.style.display = intruderCb ? 'block' : 'none';
                 if(intruderCb) btnIntruder.onclick = intruderCb;
@@ -777,7 +818,6 @@
             document.getElementById('modal-overlay').style.display = 'flex';
         }
 
-        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
         function playSound(t) {
             const c=new(window.AudioContext||window.webkitAudioContext)(), o=c.createOscillator(), g=c.createGain();
             o.connect(g); g.connect(c.destination);
@@ -785,11 +825,22 @@
             else{ o.frequency.value=800; g.gain.value=0.1; o.start(); o.stop(c.currentTime+0.1); }
         }
 
-        document.getElementById('location').addEventListener('keydown', e => { if(e.key === 'Enter') { if(checkLocation(e.target.value.toUpperCase())) document.getElementById('material').focus(); } });
-        document.getElementById('material').addEventListener('keydown', e => { if(e.key === 'Enter') { verifyMaterialBeforeQty(() => document.getElementById('qty').focus()); } });
+        // --- GESTOS ---
+        let touchStartX = 0;
+        document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, {passive: true});
+        document.addEventListener('touchend', e => {
+            const touchEndX = e.changedTouches[0].screenX;
+            if (touchStartX - touchEndX > 120) window.switchView('historial'); 
+            if (touchEndX - touchStartX > 120) window.switchView('conteo'); 
+        }, {passive: true});
+
+        // --- LISTENERS TECLADO ---
+        document.getElementById('location').addEventListener('keydown', e => { if(e.key === 'Enter') { if(window.checkLocation(e.target.value.toUpperCase())) document.getElementById('material').focus(); } });
+        document.getElementById('material').addEventListener('keydown', e => { if(e.key === 'Enter') { window.verifyMaterialBeforeQty(() => document.getElementById('qty').focus()); } });
         document.getElementById('qty').addEventListener('keydown', e => { if(e.key === 'Enter') window.validateAndSave(); });
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initAuth();
             if(intruderConfig.locked) {
                 const s = document.getElementById('intruder-start');
                 const e = document.getElementById('intruder-end');
