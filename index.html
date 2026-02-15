@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="icon" type="image/png" href="logo.png">
     
-    <title>Inventario Pro - V31.5</title>
+    <title>Inventario Pro - V31.6</title>
     <style>
         :root {
             --navy-main: #0D2334;
@@ -79,6 +79,12 @@
 
         .card { background: var(--bg-card); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid rgba(0,0,0,0.05); }
 
+        /* --- INFO ADM --- */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .stat-card { background: #EEF2FF; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #C3DAFE; }
+        .stat-val { display: block; font-size: 18px; font-weight: 800; color: var(--navy-main); }
+        .stat-lbl { font-size: 9px; font-weight: 700; color: #4338CA; text-transform: uppercase; }
+
         /* --- FORM --- */
         label { display: block; font-size: 10px; font-weight: 700; color: var(--navy-main); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
         input { width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 8px; background-color: var(--input-bg); color: var(--input-text); margin-bottom: 15px; }
@@ -138,7 +144,7 @@
         <div class="login-box">
             <img src="logo.png" alt="Logo" class="login-logo" onerror="this.src='https://img.icons8.com/color/96/box--v1.png'">
             <h2>GRUPO CARGO</h2>
-            <span class="version-tag">SISTEMA INVENTARIO V31.5</span>
+            <span class="version-tag">SISTEMA INVENTARIO V31.6</span>
             <input type="text" id="login-user" placeholder="Usuario (ej: luciano)">
             <input type="password" id="login-pass" placeholder="Contraseña">
             <button class="btn btn-primary" onclick="loginUsuario()">INGRESAR</button>
@@ -149,7 +155,6 @@
         <div class="header-top">
             <button class="logout-btn" onclick="logout()">SALIR</button>
             <h1>Inventario Cargo</h1>
-            <!-- Botón de nube para todos los usuarios -->
             <button class="header-btn-upload" id="btn-cloud-master" onclick="downloadMasterFromCloud()" title="Sincronizar Maestro">☁️</button>
         </div>
         <div class="tabs">
@@ -160,7 +165,7 @@
 
     <div id="view-conteo" class="view active container">
         <div id="master-alert-box" style="background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; padding:12px; border-radius:10px; font-size:12px; margin-bottom:12px; display:flex; align-items:center; gap:10px;">
-            <span>⚠️</span> <div><strong>ATENCIÓN:</strong> El maestro no está cargado. Toca la nube ☁️.</div>
+            <span>⚠️</span> <div><strong>ATENCIÓN:</strong> Maestro no cargado. Toca la nube ☁️.</div>
         </div>
         <div id="master-success-box" style="display:none; background:#DCFCE7; border:1px solid #86EFAC; color:#166534; padding:12px; border-radius:10px; font-size:12px; margin-bottom:12px; align-items:center; gap:10px;">
             <span>✅</span> <div id="master-info-text">Maestro activo.</div>
@@ -179,7 +184,7 @@
             </div>
             <div class="adm-only" style="margin-top:5px;">
                 <label>Rango Intrusos</label>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 70px; gap:10px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr 70px; gap:8px;">
                     <input type="number" id="intruder-start" value="1">
                     <input type="number" id="intruder-end" value="300">
                     <button id="btn-lock-range" class="btn-lock" onclick="toggleRangeLock()">🔓 FIJAR</button>
@@ -217,16 +222,33 @@
     </div>
 
     <div id="view-historial" class="view container">
-        <div class="card adm-only" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
-            <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:10px;">CSV FULL</button>
-            <button class="btn btn-secondary" onclick="location.reload()" style="font-size:10px;">REFRESCAR</button>
-            <button class="btn btn-danger-block" onclick="resetAllProtected()" style="font-size:10px;">BORRAR TODO</button>
+        <div class="adm-only">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-val" id="reads-count">0</span>
+                    <span class="stat-lbl">Lecturas Hoy</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-val" id="writes-count">0</span>
+                    <span class="stat-lbl">Escrituras</span>
+                </div>
+            </div>
+            <div class="card" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; padding: 10px;">
+                <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:10px; height: 40px;">CSV FULL</button>
+                <button class="btn btn-secondary" onclick="location.reload()" style="font-size:10px; height: 40px;">AUDITORÍA</button>
+                <button class="btn btn-danger-block" onclick="resetAllProtected()" style="font-size:10px; height: 40px;">BORRAR TODO</button>
+            </div>
         </div>
+
+        <div id="user-history-info" style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-align: center;">
+            Mostrando los últimos 100 registros.
+        </div>
+
         <div class="card" style="padding: 0; overflow: hidden;">
             <div class="table-wrap">
                 <table id="records-table">
                     <thead>
-                        <tr><th>Fecha</th><th>Hora</th><th>Ubi</th><th>Mat</th><th>Cant</th><th>User</th><th>Estado</th><th class="adm-only"></th></tr>
+                        <tr><th>Fecha/Hora</th><th>Ubi</th><th>Mat</th><th>Cant</th><th>User</th><th>Estado</th><th class="adm-only"></th></tr>
                     </thead>
                     <tbody id="records-body"></tbody>
                 </table>
@@ -252,12 +274,11 @@
         <div class="modal-box">
             <div class="modal-title">ASIGNACIÓN INTRUSO</div>
             <div id="intruder-location-display" style="font-size: 28px; font-weight: 900; color: #D70F27; margin: 15px 0;"></div>
-            <div style="font-size: 13px; margin-bottom: 5px; color: #64748B;">Se registrará el material:</div>
-            <div id="intruder-material-display" style="font-weight:800; color: var(--navy-main); margin-bottom:15px;"></div>
+            <div id="intruder-material-display" style="font-weight:800; color: var(--navy-main); margin-bottom:15px; font-size: 12px;"></div>
             <label>Cantidad Física:</label>
             <input type="number" id="intruder-qty-input" placeholder="0" style="margin-bottom: 20px; text-align: center; font-weight: 800; font-size: 20px;">
             <button class="btn btn-primary" id="btn-save-intruder">GUARDAR INTRUSO</button>
-            <button class="btn btn-secondary" onclick="closeIntruderModal()" style="margin-top: 8px;">CANCELAR</button>
+            <button class="btn btn-secondary" onclick="closeIntruderModal()">CANCELAR</button>
         </div>
     </div>
 
@@ -265,7 +286,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDI2_dfJ5WbGCoddHPaXg40yrxEZqB4ZXI",
@@ -280,6 +301,7 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
         const auth = getAuth(app);
+        const appId = "cargo-inv-v31";
 
         const ADMIN_EMAIL = "lvilla@grupocargo.com";
         let masterData = new Map();
@@ -292,9 +314,21 @@
         let currentIntruderData = null;
         let originalPendingLocation = null;
 
+        // Estadísticas de consumo estimadas
+        let estimatedReads = 0;
+        let estimatedWrites = 0;
+
         if ('BarcodeDetector' in window) {
             barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
         }
+
+        // --- BLOQUEO DE REFRESCAR ---
+        window.addEventListener('beforeunload', (e) => {
+            if (auth.currentUser) {
+                e.preventDefault();
+                e.returnValue = "Al refrescar volverás a consumir lecturas de la base de datos. ¿Estás seguro?";
+            }
+        });
 
         // --- AUTH ---
         window.loginUsuario = async () => {
@@ -314,9 +348,11 @@
                 document.getElementById('main-header').style.display = 'block';
                 document.getElementById('view-conteo').classList.add('active');
                 document.getElementById('user-display').value = user.email.split('@')[0].toUpperCase();
+                
                 const isAdmin = user.email === ADMIN_EMAIL;
                 document.querySelectorAll('.adm-only').forEach(el => el.style.display = isAdmin ? 'grid' : 'none');
-                
+                if (isAdmin) document.getElementById('user-history-info').style.display = 'none';
+
                 initRealtimeSync();
                 loadLocalMaster(); 
             } else {
@@ -326,9 +362,22 @@
         });
 
         function initRealtimeSync() {
-            onSnapshot(collection(db, "conteos"), (snap) => {
+            // Path regla 1: /artifacts/{appId}/public/data/conteos
+            const collectionRef = collection(db, "artifacts", appId, "public", "data", "conteos");
+            
+            onSnapshot(collectionRef, (snap) => {
+                const isFirstLoad = records.length === 0;
                 records = [];
                 snap.forEach(d => records.push({ firebaseId: d.id, ...d.data() }));
+                
+                // Estimar lecturas
+                if (isFirstLoad) {
+                    estimatedReads += snap.size; // Carga inicial
+                } else {
+                    estimatedReads += 1; // Un nuevo registro entró
+                }
+                updateStatsUI();
+
                 records.sort((a, b) => b.id - a.id);
                 renderTable();
             }, (err) => {
@@ -336,20 +385,28 @@
             });
         }
 
-        // --- MAESTRO ---
+        function updateStatsUI() {
+            const readsEl = document.getElementById('reads-count');
+            const writesEl = document.getElementById('writes-count');
+            if (readsEl) readsEl.innerText = estimatedReads.toLocaleString();
+            if (writesEl) writesEl.innerText = estimatedWrites.toLocaleString();
+        }
+
+        // --- MAESTRO (STORAGE) ---
         window.downloadMasterFromCloud = async () => {
             const btn = document.getElementById('btn-cloud-master');
             btn.innerHTML = "⏳";
             try {
-                const url = await getDownloadURL(ref(storage, 'maestro.csv'));
+                const masterRef = ref(storage, 'maestro.csv');
+                const url = await getDownloadURL(masterRef);
                 const res = await fetch(url);
                 const text = await res.text();
                 processMasterData(text);
                 btn.innerHTML = "✅";
                 playSound('success');
-                showAlert("ÉXITO", "Maestro sincronizado correctamente desde la nube.", null, false);
+                showAlert("ÉXITO", "Maestro sincronizado correctamente.\nNo consume lecturas de base de datos.", null, false);
             } catch (e) {
-                showAlert("ERROR DE MAESTRO", "No se pudo bajar el archivo. Asegúrese de tener internet y que el archivo 'maestro.csv' esté en Storage.", null, true);
+                showAlert("ERROR DE MAESTRO", "No se pudo bajar el archivo maestro.", null, true);
                 btn.innerHTML = "☁️";
             }
         };
@@ -403,12 +460,12 @@
                 return false;
             }
             if (records.some(r => r.location === ubi)) {
-                showAlert("UBICACIÓN DUPLICADA", `La ubicación ${ubi} ya fue contada anteriormente.`, null, true);
+                showAlert("UBICACIÓN DUPLICADA", `La ubicación ${ubi} ya fue contada.`, null, true);
                 playSound('error');
                 return false;
             }
             if (!ubi.startsWith("INV") && masterData.size > 0 && !masterData.has(ubi)) {
-                showAlert("NO EXISTE EN MAESTRO", `La ubicación ${ubi} no figura en el archivo maestro cargado.`, null, true);
+                showAlert("NO EXISTE EN MAESTRO", `La ubicación ${ubi} no figura en el archivo maestro.`, null, true);
                 playSound('error');
                 return false;
             }
@@ -429,7 +486,7 @@
                     const expectedList = masterList.map(m => m.mat).join(" o ");
                     originalPendingLocation = ubi; 
                     showAlert("MATERIAL INESPERADO", 
-                        `El material leído (${mat}) no coincide con lo esperado para esta posición (${expectedList}).\n\n¿Desea registrarlo igual o asignarlo a un hueco de intruso?`, 
+                        `El material leído (${mat}) no coincide con lo esperado (${expectedList}).\n\n¿Desea registrarlo igual o como un intruso?`, 
                         onSuccess, 
                         true,
                         () => handleIntruderRegistration() 
@@ -441,7 +498,7 @@
         }
 
         window.validateAndSave = async () => {
-            if (masterData.size === 0) return showAlert("MAESTRO REQUERIDO", "Cargue el maestro primero tocando la nube ☁️.", null, true);
+            if (masterData.size === 0) return showAlert("MAESTRO REQUERIDO", "Cargue el maestro primero.", null, true);
             const ubi = document.getElementById('location').value.trim().toUpperCase();
             const mat = document.getElementById('material').value.trim().toUpperCase();
             const qtyStr = document.getElementById('qty').value;
@@ -456,17 +513,17 @@
                 const diff = 0 - list[0].stock;
                 pendingSaveData = { 
                     id: Date.now(), date: new Date().toLocaleDateString(), 
-                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                     user: auth.currentUser.email.split('@')[0].toUpperCase(), 
                     location: ubi, material: mainMat, qty: 0, 
                     theoretical: list[0].stock, storage: list[0].storage, doc: list[0].doc,
                     status: 'VACIO', diff: diff 
                 };
-                showAlert("CONFIRMAR VACÍO", `¿Desea registrar la ubicación ${ubi} como VACÍA?\n(Se guardará material ${mainMat} con cantidad 0)`, confirmSave, true);
+                showAlert("CONFIRMAR VACÍO", `¿Registrar ${ubi} como VACÍA?\n(Cantidad 0)`, confirmSave, true);
                 return;
             }
 
-            if (isNaN(qty)) return showAlert("CANTIDAD INVÁLIDA", "Por favor ingrese un número en el campo cantidad.", null, true);
+            if (isNaN(qty)) return showAlert("CANTIDAD INVÁLIDA", "Ingrese un número válido.", null, true);
 
             verifyMaterialBeforeQty(() => {
                 let status = 'OK', theoretical = 0, diff = 0, finalMat = mat, st='', dc='';
@@ -486,7 +543,7 @@
                 }
                 const record = { 
                     id: Date.now(), date: new Date().toLocaleDateString(), 
-                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                     user: auth.currentUser.email.split('@')[0].toUpperCase(), 
                     location: ubi, material: finalMat, qty, theoretical, storage: st, doc: dc, status, diff 
                 };
@@ -497,10 +554,13 @@
 
         async function saveRecord(record) {
             try {
-                await addDoc(collection(db, "conteos"), record);
+                const collectionRef = collection(db, "artifacts", appId, "public", "data", "conteos");
+                await addDoc(collectionRef, record);
+                estimatedWrites++;
+                updateStatsUI();
                 playSound('success');
                 clearForm();
-            } catch(e) { showAlert("FALLO DE RED", "Error al conectar con la nube. Revise su conexión.", null, true); }
+            } catch(e) { showAlert("FALLO DE NUBE", "Error al guardar.", null, true); }
         }
 
         function confirmSave() { if(pendingSaveData) { saveRecord(pendingSaveData); pendingSaveData=null; closeModal(); } }
@@ -515,7 +575,7 @@
                 const cand = "INV" + String(i).padStart(3, '0');
                 if (!records.some(r => r.location === cand)) { found = cand; break; }
             }
-            if (!found) return showAlert("SIN UBICACIONES", "No hay ubicaciones INV disponibles en el rango configurado.", null, true);
+            if (!found) return showAlert("SIN HUECOS", "No hay INV disponibles.", null, true);
             
             const mat = document.getElementById('material').value.trim().toUpperCase();
             currentIntruderData = { ubi: found, mat };
@@ -534,14 +594,13 @@
             
             const record = { 
                 id: Date.now(), date: new Date().toLocaleDateString(), 
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 user: auth.currentUser.email.split('@')[0].toUpperCase(), 
                 location: currentIntruderData.ubi, material: currentIntruderData.mat, 
                 qty, theoretical: 0, storage: '', doc: 'INTRUSO', status: 'INTRUSO_UBI', diff: qty 
             };
             
             await saveRecord(record);
-            playSound('success');
             
             const nextUbi = originalPendingLocation;
             closeIntruderModal();
@@ -550,14 +609,13 @@
             if (nextUbi) {
                 document.getElementById('location').value = nextUbi;
                 document.getElementById('material').focus();
-                // Eliminado alerta popup, ahora es fluido
                 originalPendingLocation = null;
             }
         };
 
         // --- CÁMARA ---
         window.startCamera = async (target) => {
-            if(masterData.size === 0) return showAlert("CARGUE MAESTRO", "Debe cargar el maestro antes de usar la cámara.", null, true);
+            if(masterData.size === 0) return showAlert("CARGUE MAESTRO", "Sincronice el maestro primero.", null, true);
             scanningTarget = document.getElementById(target);
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
@@ -603,23 +661,25 @@
             if (touchEndX - touchStartX > 120) switchView('conteo'); 
         }, {passive: true});
 
-        // --- ACCIONES ADMINISTRADOR ---
+        // --- ACCIONES ADM ---
         window.deleteRecord = async (id) => {
-            showAlert("¿ELIMINAR?", "Esta acción quitará el registro permanentemente del servidor.", () => {
-                deleteDoc(doc(db, "conteos", id)).catch(() => showAlert("ERROR", "No se pudo eliminar.", null, true));
+            showAlert("¿ELIMINAR?", "Se quitará del servidor.", () => {
+                const docRef = doc(db, "artifacts", appId, "public", "data", "conteos", id);
+                deleteDoc(docRef).catch(() => showAlert("ERROR", "No se pudo eliminar.", null, true));
             }, true);
         };
 
         window.resetAllProtected = async () => {
-            showAlert("⚠️ ADVERTENCIA CRÍTICA", "¿Seguro que desea BORRAR TODO el historial de la nube? Esta acción es irreversible.", () => {
-                const pwd = prompt("Ingrese contraseña de supervisor para confirmar:");
+            showAlert("⚠️ ACCIÓN DESTRUCTIVA", "¿Borrar TODO el historial de la nube?", () => {
+                const pwd = prompt("Contraseña de supervisor:");
                 if(pwd === "cargo123") {
-                    getDocs(collection(db, "conteos")).then(snap => {
+                    const collectionRef = collection(db, "artifacts", appId, "public", "data", "conteos");
+                    getDocs(collectionRef).then(snap => {
                         const batch = writeBatch(db);
                         snap.forEach(d => batch.delete(d.ref));
-                        batch.commit().then(() => showAlert("COMPLETADO", "La base de datos ha sido vaciada.", null, false));
+                        batch.commit().then(() => showAlert("LISTO", "Nube vaciada.", null, false));
                     });
-                } else if (pwd !== null) { showAlert("ERROR", "Contraseña incorrecta.", null, true); }
+                } else if (pwd !== null) { showAlert("ERROR", "Clave incorrecta.", null, true); }
             }, true);
         };
 
@@ -633,10 +693,7 @@
         };
 
         // --- UTILIDADES ---
-        function clearForm() { 
-            document.querySelectorAll('.card input').forEach(i => { if(!i.disabled && i.id !== 'zone-filter') i.value = ''; }); 
-            document.getElementById('location').focus(); 
-        }
+        function clearForm() { document.querySelectorAll('.card input').forEach(i => { if(!i.disabled && i.id !== 'zone-filter') i.value = ''; }); document.getElementById('location').focus(); }
         function playSound(t) {
             const c=new(window.AudioContext||window.webkitAudioContext)(), o=c.createOscillator(), g=c.createGain();
             o.connect(g); g.connect(c.destination);
@@ -654,10 +711,13 @@
             const body = document.getElementById('records-body');
             document.getElementById('count-badge').innerText = records.length;
             const isAdmin = auth.currentUser?.email === ADMIN_EMAIL;
-            body.innerHTML = records.map(r => `
+            
+            // FILTRO DE 100 REGISTROS PARA USUARIOS
+            const displayData = isAdmin ? records : records.slice(0, 100);
+
+            body.innerHTML = displayData.map(r => `
                 <tr>
-                    <td>${r.date}</td>
-                    <td>${r.time || ''}</td>
+                    <td>${r.date} ${r.time || ''}</td>
                     <td><b>${r.location}</b></td>
                     <td>${r.material}</td>
                     <td style="text-align:center">${r.qty}</td>
@@ -670,16 +730,13 @@
         }
 
         window.exportCSV = () => {
-            if(!records.length) return showAlert("SIN DATOS", "No hay registros para exportar todavía.", null, false);
+            if(!records.length) return showAlert("VACÍO", "No hay datos.", null, false);
             let csv = "Fecha,Hora,Usuario,Ubicacion,Material,Doc_Inventario,Storage,Stock_Teorico,Stock_Fisico,Diferencia,Estado\n";
             records.forEach(r => {
                 csv += `${r.date},${r.time||''},${r.user},${r.location},${r.material},${r.doc||''},${r.storage||''},${r.theoretical??''},${r.qty},${r.diff??''},${r.status}\n`;
             });
             const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
-            const a = document.createElement('a'); 
-            a.href = URL.createObjectURL(blob); 
-            a.download = `Inventario_Cargo_${new Date().toISOString().slice(0,10)}.csv`; 
-            a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Inventario_Final_${Date.now()}.csv`; a.click();
         };
 
         function showAlert(title, msg, confirmCb, isError = false, intruderCb = null) {
@@ -694,15 +751,10 @@
             box.className = isError ? 'modal-box error-mode' : 'modal-box';
             document.getElementById('modal-icon').innerText = isError ? '⛔' : '⚠️';
             
-            // Si no hay callbacks (es solo info), mostramos botón OK unificado
             if(!confirmCb && !intruderCb) {
-                btnConfirm.style.display = 'none';
-                btnIntruder.style.display = 'none';
-                btnCancel.style.display = 'none';
-                btnOk.style.display = 'block';
+                btnConfirm.style.display = 'none'; btnIntruder.style.display = 'none'; btnCancel.style.display = 'none'; btnOk.style.display = 'block';
             } else {
-                btnOk.style.display = 'none';
-                btnCancel.style.display = 'block';
+                btnOk.style.display = 'none'; btnCancel.style.display = 'block';
                 btnConfirm.style.display = confirmCb ? 'block' : 'none';
                 if(confirmCb) {
                     btnConfirm.innerText = title === "CONFIRMAR VACÍO" ? "SÍ, ESTÁ VACÍA" : "SÍ, GUARDAR IGUAL";
@@ -711,10 +763,8 @@
                 btnIntruder.style.display = intruderCb ? 'block' : 'none';
                 if(intruderCb) btnIntruder.onclick = intruderCb;
             }
-            
             document.getElementById('modal-overlay').style.display = 'flex';
         }
-
         window.closeModal = () => document.getElementById('modal-overlay').style.display = 'none';
 
         document.getElementById('location').addEventListener('keydown', e => { if(e.key === 'Enter') { if(checkLocation(e.target.value.toUpperCase())) document.getElementById('material').focus(); } });
@@ -723,10 +773,12 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if(intruderConfig.locked) {
-                document.getElementById('intruder-start').disabled = true;
-                document.getElementById('intruder-end').disabled = true;
-                document.getElementById('btn-lock-range').innerText = '🔒 BLOQ';
-                document.getElementById('btn-lock-range').classList.add('locked');
+                const s = document.getElementById('intruder-start');
+                const e = document.getElementById('intruder-end');
+                if(s) s.disabled = true;
+                if(e) e.disabled = true;
+                const b = document.getElementById('btn-lock-range');
+                if(b) { b.innerText = '🔒 BLOQ'; b.classList.add('locked'); }
             }
         });
     </script>
