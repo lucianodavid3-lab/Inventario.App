@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0D2334">
     
-    <!-- Configuración PWA para Pantalla Completa -->
+    <!-- Configuración PWA para Instalación Real -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,7 +15,7 @@
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="icon" type="image/png" href="logo.png">
     
-    <title>Inventario Pro - V31.19</title>
+    <title>Inventario Pro - V31.21</title>
     <style>
         :root {
             --navy-main: #0D2334;
@@ -89,7 +89,7 @@
         /* --- INFO ADM --- */
         .stats-grid { 
             display: grid; 
-            grid-template-columns: 1fr 1fr 1fr; 
+            grid-template-columns: repeat(3, 1fr); 
             gap: 8px; 
             margin-bottom: 16px; 
         }
@@ -105,7 +105,7 @@
 
         /* --- FORM --- */
         label { display: block; font-size: 10px; font-weight: 700; color: var(--navy-main); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-        input { width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 8px; background-color: var(--input-bg); color: var(--input-text); margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 8px; background-color: var(--input-bg); color: var(--input-text); margin-bottom: 15px; width: 100% !important; }
         input:focus { background-color: #fff; box-shadow: 0 0 0 2px var(--navy-main); }
         .input-wrapper { position: relative; }
         .input-action-btn { position: absolute; right: 4px; top: 18px; width: 40px; height: 40px; background: var(--navy-main); color: white; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -116,13 +116,10 @@
         .btn-secondary { background-color: var(--input-bg); color: var(--navy-main); }
         .btn-danger-block { background-color: var(--danger); color: white; }
         
-        .btn-lock { background: var(--navy-main); color: white; border: none; border-radius: 8px; width: 100%; height: 100%; font-size: 10px; font-weight: bold; cursor: pointer; }
-        .btn-lock.locked { background: var(--success); }
-
-        /* --- TABLA --- */
+        /* --- TABLAS --- */
         .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #eee; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 800px; }
-        th { background: var(--navy-main); color: white; padding: 10px; text-align: left; position: sticky; top: 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 600px; }
+        th { background: var(--navy-main); color: white; padding: 10px; text-align: left; }
         td { padding: 10px; border-bottom: 1px solid #eee; white-space: nowrap; }
         .status-badge { padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
         .bg-ok { background: #DCFCE7; color: #166534; }
@@ -135,25 +132,17 @@
             background: rgba(13, 35, 52, 0.85); z-index: 1000;
             align-items: center; justify-content: center; backdrop-filter: blur(2px);
         }
-        .modal-box { background: white; width: 90%; max-width: 340px; border-radius: 16px; padding: 25px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 4px solid transparent; transition: border 0.3s; }
-        
+        .modal-box { background: white; width: 90%; max-width: 340px; border-radius: 16px; padding: 25px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 4px solid transparent; }
         .modal-box.error-mode { border-color: var(--danger); }
         .modal-box.success-mode { border-color: var(--success); }
         .modal-box.warning-mode { border-color: var(--warning); }
-
         .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 10px; color: var(--navy-main); }
-        .error-mode .modal-title { color: var(--danger); }
         .success-mode .modal-title { color: var(--success); }
-        .warning-mode .modal-title { color: var(--warning); }
-
         .modal-msg { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; white-space: pre-wrap; }
         .modal-btn { width: 100%; padding: 14px; border-radius: 10px; font-weight: 700; border: none; margin-bottom: 10px; cursor: pointer; font-size: 13px; }
-        
-        .modal-btn.danger { background: var(--red-accent); color: white; }
-        .modal-btn.intruder { background: var(--warning); color: white; }
-        .modal-btn.cancel { background: var(--input-bg); color: var(--navy-main); }
-        .modal-btn.info { background: var(--navy-main); color: white; }
         .modal-btn.confirm-ok { background: var(--success); color: white; }
+        .modal-btn.cancel { background: var(--input-bg); color: var(--navy-main); }
+        .modal-btn.danger { background: var(--red-accent); color: white; }
 
         /* --- CÁMARA --- */
         #camera-container { display: none; position: relative; margin-bottom: 10px; border-radius: 12px; overflow: hidden; background: black; border: 3px solid var(--red-accent); }
@@ -171,7 +160,7 @@
         <div class="login-box">
             <img src="logo.png" alt="Logo" class="login-logo" onerror="this.src='https://img.icons8.com/color/144/box--v1.png'">
             <h2>GRUPO CARGO</h2>
-            <span class="version-tag">SISTEMA INVENTARIO V31.19</span>
+            <span class="version-tag">SISTEMA INVENTARIO V31.21</span>
             <input type="text" id="login-user" placeholder="Usuario (ej: luciano)">
             <input type="password" id="login-pass" placeholder="Contraseña">
             <button class="btn btn-primary" onclick="loginUsuario()">INGRESAR</button>
@@ -193,7 +182,7 @@
 
     <div id="view-conteo" class="view active container">
         <div id="master-alert-box" style="background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; padding:12px; border-radius:10px; font-size:12px; margin-bottom:12px; display:flex; align-items:center; gap:10px;">
-            <span>⚠️</span> <div><strong>ATENCIÓN:</strong> El maestro no está cargado. Toca la nube ☁️.</div>
+            <span>⚠️</span> <div><strong>ATENCIÓN:</strong> Maestro no cargado.</div>
         </div>
         <div id="master-success-box" style="display:none; background:#DCFCE7; border:1px solid #86EFAC; color:#166534; padding:12px; border-radius:10px; font-size:12px; margin-bottom:12px; align-items:center; gap:10px;">
             <span>✅</span> <div id="master-info-text">Maestro activo.</div>
@@ -206,7 +195,7 @@
                     <input type="text" id="user-display" disabled style="font-weight:700; background:#F1F5F9;">
                 </div>
                 <div>
-                    <label>Sector Asignado</label>
+                    <label>Sector / Zona</label>
                     <input type="text" id="zone-display" disabled style="font-weight:700; background:#F1F5F9; text-transform:uppercase;">
                     <input type="hidden" id="zone-filter">
                 </div>
@@ -218,7 +207,6 @@
             <div class="camera-overlay">ENFOQUE EL CÓDIGO</div>
             <button class="camera-close" onclick="stopCamera()">✕</button>
         </div>
-        <input type="file" id="scan-fallback" accept="image/*" capture="environment" hidden>
 
         <div class="card">
             <div class="input-wrapper">
@@ -243,32 +231,27 @@
     </div>
 
     <div id="view-historial" class="view container">
-        <div class="adm-only" style="margin-bottom: 20px;">
+        <div class="adm-only">
             <div class="stats-grid">
                 <div class="stat-card">
                     <span class="stat-val" id="reads-count">0</span>
                     <span class="stat-lbl">Lecturas</span>
                 </div>
                 <div class="stat-card" style="background: #FFFBEB; border-color: #FDE68A;">
-                    <span class="stat-val" id="progress-percent" style="color: #92400E;">0%</span>
-                    <span class="stat-lbl" style="color: #92400E;">% Avance</span>
+                    <span class="stat-val" id="progress-percent">0%</span>
+                    <span class="stat-lbl">% Avance</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-val" id="count-badge">0</span>
-                    <span class="stat-lbl">Conteos</span>
+                    <span class="stat-lbl">Registros</span>
                 </div>
             </div>
-            <div class="card" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; padding: 10px;">
+            <div class="card" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; padding: 10px; margin-bottom: 20px;">
                 <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:10px; height: 42px;">CSV FULL</button>
                 <button class="btn btn-secondary" onclick="location.reload()" style="font-size:10px; height: 42px;">REFRESCAR</button>
                 <button class="btn btn-danger-block" onclick="resetAllProtected()" style="font-size:10px; height: 42px;">BORRAR TODO</button>
             </div>
         </div>
-
-        <div id="user-history-info" style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-align: center;">
-            Mostrando últimos 100 registros.
-        </div>
-
         <div class="card" style="padding: 0; overflow: hidden;">
             <div class="table-wrap">
                 <table id="records-table">
@@ -282,12 +265,10 @@
     </div>
 
     <div id="view-config" class="view container adm-only">
-        <div class="card">
-            <h3>Configuración por Usuario</h3>
-            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">Configure el sector y rango de intrusos manual para cada operario activo.</p>
-            
+        <div class="card" style="display: block;">
+            <h3 style="margin-top:0;">Configurar Operario</h3>
             <label>Seleccionar Usuario</label>
-            <select id="config-user-select" style="width: 100%; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #E2E8F0;"></select>
+            <select id="config-user-select"></select>
             
             <label>Sector / Zona (Prefijo)</label>
             <input type="text" id="config-zone" placeholder="Ej: A1" maxlength="3" style="text-transform: uppercase;">
@@ -302,12 +283,11 @@
                     <input type="number" id="config-inv-end" placeholder="300">
                 </div>
             </div>
-            
             <button class="btn btn-primary" onclick="saveUserConfig()">GUARDAR CONFIGURACIÓN</button>
         </div>
         
-        <div class="card">
-            <h3>Resumen por Usuario</h3>
+        <div class="card" style="display: block;">
+            <h3 style="margin-top:0;">Resumen General</h3>
             <div class="table-wrap">
                 <table style="min-width: 100%;">
                     <thead>
@@ -319,14 +299,14 @@
         </div>
     </div>
 
-    <!-- MODAL PRINCIPAL -->
+    <!-- MODALES -->
     <div id="modal-overlay">
         <div class="modal-box" id="modal-box">
             <div id="modal-icon" style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
             <div class="modal-title" id="modal-title"></div>
             <div class="modal-msg" id="modal-msg"></div>
             <button class="modal-btn" id="modal-confirm-btn" style="display:none;"></button>
-            <button class="modal-btn intruder" id="modal-intruder-btn" style="display:none;">REGISTRAR COMO INTRUSO</button>
+            <button class="modal-btn intruder" id="modal-intruder-btn" style="display:none;">REGISTRAR INTRUSO</button>
             <button class="modal-btn cancel" id="modal-cancel-btn" onclick="window.closeModal()">CANCELAR</button>
             <button class="modal-btn info" id="modal-ok-btn" style="display:none;">ENTENDIDO</button>
         </div>
@@ -338,7 +318,7 @@
             <div id="intruder-location-display" style="font-size: 28px; font-weight: 900; color: #D70F27; margin: 15px 0;"></div>
             <div id="intruder-material-display" style="font-weight:800; color: var(--navy-main); margin-bottom:15px; font-size: 12px;"></div>
             <label>Cantidad Física:</label>
-            <input type="number" id="intruder-qty-input" placeholder="0" style="margin-bottom: 20px; text-align: center; font-weight: 800; font-size: 20px;">
+            <input type="number" id="intruder-qty-input" placeholder="0" style="text-align: center; font-weight: 800; font-size: 20px;">
             <button class="btn btn-primary" id="btn-save-intruder">GUARDAR INTRUSO</button>
             <button class="btn btn-secondary" onclick="window.closeIntruderModal()">CANCELAR</button>
         </div>
@@ -346,11 +326,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, getDocs, writeBatch, query, limit, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, getDocs, writeBatch, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-        // --- CONFIGURACIÓN FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDI2_dfJ5WbGCoddHPaXg40yrxEZqB4ZXI", 
             authDomain: "inventarioapp-cddbe.firebaseapp.com",
@@ -361,7 +340,6 @@
         };
         
         const appIdActual = typeof __app_id !== 'undefined' ? __app_id : 'cargo-inv-v31';
-
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
@@ -372,145 +350,89 @@
         let MASTER_CODES = new Set();
         let records = [];
         let userConfigs = new Map();
-        
         let currentUserConfig = { zone: '', start: 1, end: 300 };
-        let scanningTarget = null;
-        let barcodeDetector = null;
+        let barcodeDetector = ('BarcodeDetector' in window) ? new BarcodeDetector({formats: ['code_128','code_39','ean_13']}) : null;
         let pendingSaveData = null;
-        let currentIntruderData = null;
         let originalPendingLocation = null;
-
-        let estimatedReads = 0;
-        let estimatedWrites = 0;
-
-        if ('BarcodeDetector' in window) {
-            barcodeDetector = new BarcodeDetector({formats: ['code_128','code_39','ean_13']});
-        }
+        let currentIntruderData = null;
 
         // --- EXPOSICIÓN GLOBAL ---
-        window.closeModal = () => {
-            document.getElementById('modal-overlay').style.display = 'none';
-        };
-
-        window.closeIntruderModal = () => {
-            document.getElementById('intruder-modal-overlay').style.display = 'none';
-            currentIntruderData = null;
-        };
-
+        window.closeModal = () => document.getElementById('modal-overlay').style.display = 'none';
+        window.closeIntruderModal = () => document.getElementById('intruder-modal-overlay').style.display = 'none';
         window.switchView = (v) => {
             document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
-            const target = document.getElementById(`view-${v}`);
-            if(target) target.classList.add('active');
-            const tab = document.getElementById(`tab-${v}`);
-            if(tab) tab.classList.add('active');
+            document.getElementById(`view-${v}`).classList.add('active');
+            document.getElementById(`tab-${v}`).classList.add('active');
         };
-
         window.clearForm = () => {
-            try {
-                const locInput = document.getElementById('location');
-                const matInput = document.getElementById('material');
-                const qtyInput = document.getElementById('qty');
-                if(locInput) locInput.value = '';
-                if(matInput) matInput.value = '';
-                if(qtyInput) qtyInput.value = '';
-                if(locInput) locInput.focus();
-            } catch(e) { console.error("Error al limpiar:", e); }
+            document.getElementById('location').value = '';
+            document.getElementById('material').value = '';
+            document.getElementById('qty').value = '';
+            document.getElementById('location').focus();
         };
 
-        // --- FUNCIONES DE APOYO ---
-        function getMatchedMaterial(scan) {
-            if (!scan) return "";
-            const cleanScan = scan.trim().toUpperCase();
-            if (MASTER_CODES.has(cleanScan)) return cleanScan;
-            // Match por primeros 9 caracteres corregido para intrusos y conteos
-            for (let code of MASTER_CODES) {
-                if (cleanScan.length >= 9 && code.length >= 9 && cleanScan.substring(0,9) === code.substring(0,9)) {
-                    return code;
-                }
-            }
-            return cleanScan;
-        }
-
-        // --- AUTENTICACIÓN (Regla 3) ---
+        // --- AUTH ---
         const initAuth = async () => {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch(e) { console.warn("Auth init error:", e.code); }
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                else await signInAnonymously(auth);
+            } catch(e) {}
         };
 
-        // --- LOGIN ---
         window.loginUsuario = async () => {
-            const userInp = document.getElementById('login-user').value.trim();
-            const passInp = document.getElementById('login-pass').value.trim();
-            if (!userInp || !passInp) return showAlert("DATOS INCOMPLETOS", "Ingrese credenciales.", null, 'error');
-            const email = userInp.includes('@') ? userInp : `${userInp.toLowerCase()}@grupocargo.com`;
-            try { await signInWithEmailAndPassword(auth, email, passInp); } 
-            catch (e) { showAlert("FALLO DE ACCESO", "Usuario o contraseña incorrectos.", null, 'error'); }
+            const u = document.getElementById('login-user').value.trim();
+            const p = document.getElementById('login-pass').value.trim();
+            if (!u || !p) return showAlert("DATOS INCOMPLETOS", "Ingrese credenciales.", null, 'error');
+            const email = u.includes('@') ? u : `${u.toLowerCase()}@grupocargo.com`;
+            try { await signInWithEmailAndPassword(auth, email, p); } 
+            catch (e) { showAlert("FALLO DE ACCESO", "Credenciales incorrectas.", null, 'error'); }
         };
 
         window.logout = () => signOut(auth);
 
         onAuthStateChanged(auth, async (user) => {
-            const loginScr = document.getElementById('login-screen');
-            const mainHdr = document.getElementById('main-header');
-            
             if (user && !user.isAnonymous) {
-                if(loginScr) loginScr.style.display = 'none';
-                if(mainHdr) mainHdr.style.display = 'block';
-                const disp = document.getElementById('user-display');
-                if(disp) disp.value = user.email.split('@')[0].toUpperCase();
-                
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-header').style.display = 'block';
+                document.getElementById('user-display').value = user.email.split('@')[0].toUpperCase();
                 const isAdmin = user.email === ADMIN_EMAIL;
                 document.querySelectorAll('.adm-only').forEach(el => el.style.display = isAdmin ? 'grid' : 'none');
-
-                initRealtimeSync();
-                loadLocalMaster();
-                loadGlobalConfigs();
-                listenToMyConfig(user.email);
-            } else if (user && user.isAnonymous) {
-                if(loginScr) loginScr.style.display = 'flex';
-                if(mainHdr) mainHdr.style.display = 'none';
-                initRealtimeSync();
-                loadLocalMaster();
+                initRealtimeSync(); loadLocalMaster(); loadGlobalConfigs(); listenToMyConfig(user.email);
             } else {
-                if(loginScr) loginScr.style.display = 'flex';
-                if(mainHdr) mainHdr.style.display = 'none';
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('main-header').style.display = 'none';
             }
         });
 
-        // --- CONFIGURACIONES POR USUARIO ---
+        // --- SYNC Y CONFIGS ---
+        function initRealtimeSync() {
+            const collRef = collection(db, "artifacts", appIdActual, "public", "data", "conteos");
+            onSnapshot(collRef, (snap) => {
+                records = [];
+                snap.forEach(d => records.push({ firebaseId: d.id, ...d.data() }));
+                records.sort((a, b) => b.id - a.id);
+                renderTable(); renderUserSummary();
+            });
+        }
+
         function loadGlobalConfigs() {
             const collRef = collection(db, "artifacts", appIdActual, "public", "data", "configs");
             onSnapshot(collRef, (snap) => {
-                const userSelect = document.getElementById('config-user-select');
-                const existingUsers = new Set();
-                snap.forEach(d => {
-                    userConfigs.set(d.id, d.data());
-                    existingUsers.add(d.id);
-                });
-                if(userSelect) {
-                    const currentVal = userSelect.value;
-                    userSelect.innerHTML = Array.from(existingUsers).map(u => `<option value="${u}">${u.split('@')[0].toUpperCase()}</option>`).join('');
-                    if(existingUsers.has(currentVal)) userSelect.value = currentVal;
-                }
+                const sel = document.getElementById('config-user-select');
+                const users = new Set();
+                snap.forEach(d => { userConfigs.set(d.id, d.data()); users.add(d.id); });
+                if(sel) sel.innerHTML = Array.from(users).map(u => `<option value="${u}">${u.split('@')[0].toUpperCase()}</option>`).join('');
                 renderUserSummary();
             });
         }
 
         function listenToMyConfig(email) {
-            const docRef = doc(db, "artifacts", appIdActual, "public", "data", "configs", email);
-            onSnapshot(docRef, (d) => {
+            onSnapshot(doc(db, "artifacts", appIdActual, "public", "data", "configs", email), (d) => {
                 if(d.exists()) {
                     currentUserConfig = d.data();
-                    const zoneDisp = document.getElementById('zone-display');
-                    const zoneFilt = document.getElementById('zone-filter');
-                    if(zoneDisp) zoneDisp.value = currentUserConfig.zone || 'SIN ASIGNAR';
-                    if(zoneFilt) zoneFilt.value = currentUserConfig.zone || '';
+                    document.getElementById('zone-display').value = currentUserConfig.zone || 'SECTOR NO ASIGNADO';
+                    document.getElementById('zone-filter').value = currentUserConfig.zone || '';
                 }
             });
         }
@@ -520,136 +442,97 @@
             const zone = document.getElementById('config-zone').value.trim().toUpperCase();
             const start = parseInt(document.getElementById('config-inv-start').value);
             const end = parseInt(document.getElementById('config-inv-end').value);
-            if(!email || isNaN(start) || isNaN(end)) return showAlert("ERROR", "Complete los campos del rango.", null, 'error');
             try {
-                const docRef = doc(db, "artifacts", appIdActual, "public", "data", "configs", email);
-                await setDoc(docRef, { zone, start, end }, { merge: true });
-                showAlert("ÉXITO", "Configuración guardada para " + email, null, 'success');
-            } catch(e) { showAlert("ERROR", "No se pudo guardar la configuración.", null, 'error'); }
+                await setDoc(doc(db, "artifacts", appIdActual, "public", "data", "configs", email), { zone, start, end }, { merge: true });
+                showAlert("SINCRONIZADO", "Configuración para " + email + " guardada.", null, 'success');
+            } catch(e) { showAlert("ERROR", "No se pudo guardar en la nube.", null, 'error'); }
         };
-
-        function initRealtimeSync() {
-            const collRef = collection(db, "artifacts", appIdActual, "public", "data", "conteos");
-            onSnapshot(collRef, (snap) => {
-                const isFirst = records.length === 0;
-                records = [];
-                snap.forEach(d => records.push({ firebaseId: d.id, ...d.data() }));
-                if (isFirst) estimatedReads += snap.size;
-                else estimatedReads += 1;
-                records.sort((a, b) => b.id - a.id);
-                renderTable();
-                renderUserSummary();
-            }, (err) => console.error("Sync Error:", err.code));
-        }
 
         // --- MAESTRO ---
         window.downloadMasterFromCloud = async () => {
             const btn = document.getElementById('btn-cloud-master');
             btn.innerHTML = "⏳";
             try {
-                const masterRef = ref(storage, 'maestro.csv');
-                const url = await getDownloadURL(masterRef);
+                const url = await getDownloadURL(ref(storage, 'maestro.csv'));
                 const res = await fetch(url);
-                const text = await res.text();
-                processMasterData(text);
-                btn.innerHTML = "✅";
-                playSound('success');
-                showAlert("ÉXITO", "Maestro sincronizado.", null, 'success');
+                processMasterData(await res.text());
+                btn.innerHTML = "✅"; playSound('success');
+                showAlert("MAESTRO OK", "Datos descargados.", null, 'success');
             } catch (e) {
-                showAlert("ERROR STORAGE", "Archivo no encontrado.", null, 'error');
+                showAlert("ERROR NUBE", "No se pudo conectar al Storage. Revise permisos.", null, 'error');
                 btn.innerHTML = "☁️";
             }
         };
 
-        function processMasterData(csvText) {
-            const lines = csvText.split(/\r\n|\n/);
+        function processMasterData(csv) {
+            const lines = csv.split(/\r\n|\n/);
             masterData.clear(); MASTER_CODES.clear();
             const sep = lines[0].indexOf(';') > -1 ? ';' : ',';
             lines.forEach(l => {
-                if (!l.trim()) return;
                 const c = l.split(sep).map(x => x.trim().toUpperCase());
                 if (c.length >= 2 && c[0]) {
-                    const entry = { mat: c[1], stock: parseFloat(c[2]) || 0, storage: c[3]||'', doc: c[4]||'' };
-                    if (masterData.has(c[0])) masterData.get(c[0]).push(entry);
-                    else masterData.set(c[0], [entry]);
+                    const e = { mat: c[1], stock: parseFloat(c[2]) || 0, storage: c[3]||'', doc: c[4]||'' };
+                    if (masterData.has(c[0])) masterData.get(c[0]).push(e);
+                    else masterData.set(c[0], [e]);
                     MASTER_CODES.add(c[1]);
                 }
             });
-            try { localStorage.setItem('inv_master_v31', JSON.stringify(Array.from(masterData.entries()))); } catch(e){}
+            localStorage.setItem('inv_master_v31', JSON.stringify(Array.from(masterData.entries())));
             updateMasterUI();
         }
 
         function loadLocalMaster() {
             const stored = localStorage.getItem('inv_master_v31');
             if (stored) {
-                try {
-                    masterData = new Map(JSON.parse(stored));
-                    MASTER_CODES.clear();
-                    for (let [u, items] of masterData) items.forEach(i => MASTER_CODES.add(i.mat));
-                    updateMasterUI();
-                } catch(e) { localStorage.removeItem('inv_master_v31'); }
+                masterData = new Map(JSON.parse(stored));
+                MASTER_CODES.clear();
+                for (let [u, items] of masterData) items.forEach(i => MASTER_CODES.add(i.mat));
+                updateMasterUI();
             }
         }
 
         function updateMasterUI() {
-            let total = 0;
-            masterData.forEach(list => total += list.length);
-            const alertBox = document.getElementById('master-alert-box');
-            const successBox = document.getElementById('master-success-box');
-            const infoText = document.getElementById('master-info-text');
+            let total = 0; masterData.forEach(list => total += list.length);
             if (total > 0) {
-                if(alertBox) alertBox.style.display = 'none';
-                if(successBox) successBox.style.display = 'flex';
-                if(infoText) infoText.innerText = `Maestro activo: ${total} registros.`;
+                document.getElementById('master-alert-box').style.display = 'none';
+                document.getElementById('master-success-box').style.display = 'flex';
+                document.getElementById('master-info-text').innerText = `Maestro activo: ${total} registros.`;
                 updateStatsUI();
             }
         }
 
-        // --- VALIDACIONES ---
+        // --- LOGICA DE NEGOCIO ---
+        function getMatchedMaterial(scan) {
+            if (!scan) return "";
+            const s = scan.trim().toUpperCase();
+            if (MASTER_CODES.has(s)) return s;
+            for (let code of MASTER_CODES) {
+                if (s.length >= 9 && code.length >= 9 && s.substring(0,9) === code.substring(0,9)) return code;
+            }
+            return s;
+        }
+
         window.checkLocation = (ubi) => {
             if (!ubi) return false;
             const zone = document.getElementById('zone-filter').value.toUpperCase();
-            
-            const clearAndFocus = () => {
-                const inp = document.getElementById('location');
-                if(inp) { 
-                    inp.value = ''; 
-                    inp.focus(); 
-                }
-            };
-
-            if (zone && !ubi.startsWith(zone)) {
-                showAlert("ZONA INCORRECTA", `La ubicación ${ubi} no pertenece a la zona ${zone}.`, clearAndFocus, 'error');
-                playSound('error');
-                return false;
-            }
-            if (records.some(r => r.location === ubi)) {
-                showAlert("DUPLICADO", `Ubicación ${ubi} ya contada.`, clearAndFocus, 'error');
-                playSound('error');
-                return false;
-            }
-            if (!ubi.startsWith("INV") && masterData.size > 0 && !masterData.has(ubi)) {
-                showAlert("NO EXISTE", `Ubicación ${ubi} desconocida en el maestro.`, clearAndFocus, 'error');
-                playSound('error');
-                return false;
-            }
+            const cleanAndFocus = () => { const i = document.getElementById('location'); if(i){ i.value=''; i.focus(); } };
+            if (zone && !ubi.startsWith(zone)) { showAlert("ZONA INCORRECTA", `Pertenece a ${zone}.`, cleanAndFocus, 'error'); return false; }
+            if (records.some(r => r.location === ubi)) { showAlert("DUPLICADO", `${ubi} ya contado.`, cleanAndFocus, 'error'); return false; }
+            if (!ubi.startsWith("INV") && masterData.size > 0 && !masterData.has(ubi)) { showAlert("NO EXISTE", `${ubi} no está en maestro.`, cleanAndFocus, 'error'); return false; }
             return true;
         };
 
         window.verifyMaterialBeforeQty = (onSuccess) => {
             const ubi = document.getElementById('location').value.trim().toUpperCase();
             const mat = document.getElementById('material').value.trim().toUpperCase();
-            if (!mat) return;
-            if (ubi.startsWith("INV")) return onSuccess();
+            if (!mat || ubi.startsWith("INV")) return onSuccess();
             const list = masterData.get(ubi);
             if (list) {
-                const matchedMat = getMatchedMaterial(mat);
-                const match = list.find(m => m.mat === matchedMat);
+                const match = list.find(m => m.mat === getMatchedMaterial(mat));
                 if (!match) {
                     playSound('error');
-                    const expectedList = list.map(m => m.mat).join(" o ");
                     originalPendingLocation = ubi; 
-                    showAlert("MATERIAL INESPERADO", `Léido (${mat}) no coincide con (${expectedList}).\n¿Registrarlo igual o como intruso?`, onSuccess, 'warning', () => handleIntruderRegistration());
+                    showAlert("MATERIAL INESPERADO", `${mat} no coincide.\n¿Guardar igual o Intruso?`, onSuccess, 'warning', () => handleIntruderRegistration());
                     return;
                 }
             }
@@ -657,298 +540,168 @@
         };
 
         window.validateAndSave = async () => {
-            if (masterData.size === 0) return showAlert("SIN MAESTRO", "Baje el maestro primero.", null, 'error');
+            if (masterData.size === 0) return showAlert("SIN MAESTRO", "Descargue la nube primero.", null, 'error');
             const ubi = document.getElementById('location').value.trim().toUpperCase();
-            const matScanned = document.getElementById('material').value.trim().toUpperCase();
-            const qtyStr = document.getElementById('qty').value;
-            const qty = parseFloat(qtyStr);
+            const mat = document.getElementById('material').value.trim().toUpperCase();
+            const qty = parseFloat(document.getElementById('qty').value);
             if (!window.checkLocation(ubi)) return;
-            
-            if (!matScanned) {
+            if (!mat) {
                 const list = masterData.get(ubi);
-                if (!list) return showAlert("ERROR", "Ingrese material.", null, 'error');
-                const mainMat = list[0].mat;
-                const diff = 0 - list[0].stock;
-                pendingSaveData = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), user: (auth.currentUser.email ? auth.currentUser.email.split('@')[0] : 'ANON').toUpperCase(), location: ubi, material: mainMat, qty: 0, theoretical: list[0].stock, storage: list[0].storage, doc: list[0].doc, status: 'VACIO', diff: diff };
-                showAlert("CONFIRMAR VACÍO", `¿Registrar ${ubi} como VACÍA?`, confirmSave, 'warning');
+                if (!list) return;
+                pendingSaveData = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), user: auth.currentUser.email.split('@')[0].toUpperCase(), location: ubi, material: list[0].mat, qty: 0, theoretical: list[0].stock, storage: list[0].storage, doc: list[0].doc, status: 'VACIO', diff: -list[0].stock };
+                showAlert("CONFIRMAR VACÍO", `¿Registrar ${ubi} VACÍA?`, confirmSave, 'warning');
                 return;
             }
-            if (isNaN(qty)) return showAlert("CANTIDAD INVÁLIDA", "Ingrese número.", null, 'error');
-
+            if (isNaN(qty)) return showAlert("SIN CANTIDAD", "Ingrese número.", null, 'error');
             window.verifyMaterialBeforeQty(() => {
-                let status = 'OK', theoretical = 0, diff = 0, finalMat = getMatchedMaterial(matScanned), st='', dc='', modalTheme = 'success';
-                if (ubi.startsWith("INV")) {
-                    status = 'INTRUSO_UBI';
-                    modalTheme = 'warning';
-                } else {
+                let status = 'OK', theoretical = 0, diff = 0, finalMat = getMatchedMaterial(mat), st='', dc='', theme='success';
+                if (ubi.startsWith("INV")) status = 'INTRUSO_UBI';
+                else {
                     const list = masterData.get(ubi);
                     if (list) {
                         const match = list.find(m => m.mat === finalMat);
-                        if (match) { 
-                            finalMat = match.mat; theoretical = match.stock; diff = qty - theoretical; st = match.storage; dc = match.doc; 
-                        } else { 
-                            status = 'INTRUSO_MAT'; 
-                            modalTheme = 'warning';
-                            st = list[0].storage; dc = list[0].doc; 
-                        }
+                        if (match) { finalMat = match.mat; theoretical = match.stock; diff = qty - theoretical; st = match.storage; dc = match.doc; }
+                        else { status = 'INTRUSO_MAT'; theme = 'warning'; st = list[0].storage; dc = list[0].doc; }
                     }
                 }
-                pendingSaveData = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), user: (auth.currentUser.email ? auth.currentUser.email.split('@')[0] : 'ANON').toUpperCase(), location: ubi, material: finalMat, qty, theoretical, storage: st, doc: dc, status, diff };
-                showAlert("REVISIÓN DE CONTEO", `UBICACIÓN: ${ubi}\nMATERIAL: ${finalMat}\nCANTIDAD: ${qty}\n\n¿Los datos son correctos?`, confirmSave, modalTheme);
+                pendingSaveData = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), user: auth.currentUser.email.split('@')[0].toUpperCase(), location: ubi, material: finalMat, qty, theoretical, storage: st, doc: dc, status, diff };
+                showAlert("REVISIÓN", `UBI: ${ubi}\nMAT: ${finalMat}\nCANT: ${qty}`, confirmSave, theme);
             });
         };
 
-        async function saveRecord(record) {
-            try {
-                const collRef = collection(db, "artifacts", appIdActual, "public", "data", "conteos");
-                await addDoc(collRef, record);
-                estimatedWrites++; updateStatsUI(); playSound('success'); window.clearForm();
-            } catch(e) { showAlert("FALLO DE NUBE", `ERROR TÉCNICO: ${e.code || 'Desconocido'}`, null, 'error'); }
-        }
-
         function confirmSave() { 
             if(pendingSaveData) { 
-                const isIntruder = pendingSaveData.status.startsWith('INTRUSO');
-                const originalUbi = originalPendingLocation;
-                saveRecord(pendingSaveData); 
-                pendingSaveData = null; 
-                window.closeModal(); 
-                
-                // FLUJO DE CONTINUIDAD TRAS INTRUSO (Restaurado)
-                if (isIntruder && originalUbi) {
-                    const locInput = document.getElementById('location');
-                    if (locInput) { 
-                        locInput.value = originalUbi; 
-                        document.getElementById('material').focus(); 
-                    }
-                    originalPendingLocation = null;
-                }
+                const isInt = pendingSaveData.status.startsWith('INTRUSO');
+                const orig = originalPendingLocation;
+                addDoc(collection(db, "artifacts", appIdActual, "public", "data", "conteos"), pendingSaveData).then(() => {
+                    playSound('success'); window.clearForm();
+                    if(isInt && orig) { document.getElementById('location').value = orig; document.getElementById('material').focus(); originalPendingLocation = null; }
+                });
+                pendingSaveData = null; window.closeModal(); 
             } 
         }
 
         function handleIntruderRegistration() {
             window.closeModal();
-            const start = currentUserConfig.start || 1;
-            const end = currentUserConfig.end || 300;
+            const s = currentUserConfig.start || 1, e = currentUserConfig.end || 300;
             let found = null;
-            for(let i = start; i <= end; i++) {
-                const cand = "INV" + String(i).padStart(3, '0');
-                if (!records.some(r => r.location === cand)) { found = cand; break; }
+            for(let i = s; i <= e; i++) {
+                const c = "INV" + String(i).padStart(3, '0');
+                if (!records.some(r => r.location === c)) { found = c; break; }
             }
-            if (!found) return showAlert("SIN HUECOS", "Sin INV libres en su rango.", null, 'error');
-            
-            const matScanned = document.getElementById('material').value.trim().toUpperCase();
-            const matchedMat = getMatchedMaterial(matScanned); // Match con el maestro corregido
-            
-            currentIntruderData = { ubi: found, mat: matchedMat };
+            if (!found) return showAlert("RANGO LLENO", "No hay huecos INV libres.", null, 'error');
+            const matMatched = getMatchedMaterial(document.getElementById('material').value);
+            currentIntruderData = { ubi: found, mat: matMatched };
             document.getElementById('intruder-location-display').innerText = found;
-            document.getElementById('intruder-material-display').innerText = matchedMat;
+            document.getElementById('intruder-material-display').innerText = matMatched;
             document.getElementById('intruder-qty-input').value = '';
             document.getElementById('intruder-modal-overlay').style.display = 'flex';
-            setTimeout(() => { if(document.getElementById('intruder-qty-input')) document.getElementById('intruder-qty-input').focus(); }, 150);
+            setTimeout(() => document.getElementById('intruder-qty-input').focus(), 150);
         }
 
-        document.getElementById('btn-save-intruder').onclick = async () => {
-            const qtyVal = document.getElementById('intruder-qty-input').value;
-            const qty = parseFloat(qtyVal);
-            if (isNaN(qty)) return showAlert("ERROR", "Cantidad inválida.", null, 'error');
-            
-            const record = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), user: (auth.currentUser.email ? auth.currentUser.email.split('@')[0] : 'ANON').toUpperCase(), location: currentIntruderData.ubi, material: currentIntruderData.mat, qty, theoretical: 0, storage: '', doc: 'INTRUSO', status: 'INTRUSO_UBI', diff: qty };
-            
+        document.getElementById('btn-save-intruder').onclick = () => {
+            const q = parseFloat(document.getElementById('intruder-qty-input').value);
+            if (isNaN(q)) return;
             window.closeIntruderModal();
-            pendingSaveData = record;
-            showAlert("CONFIRMAR INTRUSO", `Asignando a: ${record.location}\nMaterial: ${record.material}\nCantidad: ${record.qty}\n\n¿Confirmar registro?`, confirmSave, 'warning');
+            pendingSaveData = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), user: auth.currentUser.email.split('@')[0].toUpperCase(), location: currentIntruderData.ubi, material: currentIntruderData.mat, qty: q, theoretical: 0, storage: '', doc: 'INTRUSO', status: 'INTRUSO_UBI', diff: q };
+            showAlert("CONFIRMAR INTRUSO", `Asignar a: ${pendingSaveData.location}`, confirmSave, 'warning');
         };
 
-        // --- CÁMARA ---
+        // --- UTILIDADES ---
         window.startCamera = async (target) => {
-            if(masterData.size === 0) return showAlert("CARGUE MAESTRO", "Primero baje el maestro.", null, 'error');
+            if(masterData.size === 0) return;
             scanningTarget = document.getElementById(target);
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
                 document.getElementById('video').srcObject = stream;
                 document.getElementById('camera-container').style.display = 'block';
                 requestAnimationFrame(scanFrame);
-            } catch(e) { document.getElementById('scan-fallback').click(); }
+            } catch(e) {}
         };
-
         function scanFrame() {
-            if (document.getElementById('camera-container').style.display === 'none') return;
-            const vid = document.getElementById('video');
-            if (barcodeDetector && vid.readyState === vid.HAVE_ENOUGH_DATA) {
-                barcodeDetector.detect(vid).then(codes => {
+            const v = document.getElementById('video');
+            if (v.srcObject && barcodeDetector && v.readyState === v.HAVE_ENOUGH_DATA) {
+                barcodeDetector.detect(v).then(codes => {
                     if (codes.length > 0) {
                         const code = codes[0].rawValue.trim().toUpperCase();
-                        scanningTarget.value = code;
-                        window.stopCamera(); playSound('beep');
+                        scanningTarget.value = code; stopCamera(); playSound('beep');
                         if (scanningTarget.id === 'location') { if(window.checkLocation(code)) document.getElementById('material').focus(); }
                         else { window.verifyMaterialBeforeQty(() => document.getElementById('qty').focus()); }
                     }
                 });
             }
-            requestAnimationFrame(scanFrame);
+            if (document.getElementById('camera-container').style.display !== 'none') requestAnimationFrame(scanFrame);
         }
+        window.stopCamera = () => { const v = document.getElementById('video'); if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); document.getElementById('camera-container').style.display = 'none'; };
 
-        window.stopCamera = () => {
-            const vid = document.getElementById('video');
-            if (vid && vid.srcObject) vid.srcObject.getTracks().forEach(t => t.stop());
-            document.getElementById('camera-container').style.display = 'none';
-        };
-
-        // --- ADM ACTIONS ---
-        window.deleteRecord = async (id) => {
-            showAlert("¿ELIMINAR?", "Se borrará permanentemente.", () => {
-                deleteDoc(doc(db, "artifacts", appIdActual, "public", "data", "conteos", id));
-            }, 'warning');
-        };
-
-        window.resetAllProtected = async () => {
-            showAlert("⚠️ BORRADO TOTAL", "¿Vaciar toda la nube?", async () => {
-                const pwd = prompt("Clave Supervisor:");
-                if(pwd === "cargo123") {
-                    const snap = await getDocs(collection(db, "artifacts", appIdActual, "public", "data", "conteos"));
-                    const batch = writeBatch(db);
-                    snap.forEach(d => batch.delete(d.ref));
-                    await batch.commit();
-                    showAlert("ÉXITO", "Nube limpia.", null, 'success');
-                } else if (pwd !== null) { showAlert("ERROR", "Clave incorrecta.", null, 'error'); }
-            }, 'error');
-        };
-
-        window.toggleRangeLock = () => {
-            intruderConfig.locked = !intruderConfig.locked;
-            localStorage.setItem('inv_config_v31', JSON.stringify(intruderConfig));
-            const s = document.getElementById('intruder-start');
-            const e = document.getElementById('intruder-end');
-            const b = document.getElementById('btn-lock-range');
-            if(s) s.disabled = intruderConfig.locked;
-            if(e) e.disabled = intruderConfig.locked;
-            if(b) { b.innerText = intruderConfig.locked ? '🔒 BLOQ' : '🔓 FIJAR'; b.className = intruderConfig.locked ? 'btn-lock locked' : 'btn-lock'; }
-        };
-
+        function updateStatsUI() {
+            const p = document.getElementById('progress-percent');
+            if (p && masterData.size > 0) {
+                const counted = new Set(records.filter(r => !r.location.startsWith("INV")).map(r => r.location)).size;
+                p.innerText = Math.round((counted / masterData.size) * 100) + "%";
+            }
+        }
         function renderTable() {
-            const body = document.getElementById('records-body');
-            const badge = document.getElementById('count-badge');
-            if(badge) badge.innerText = records.length;
+            const b = document.getElementById('records-body');
+            document.getElementById('count-badge').innerText = records.length;
             const isAdmin = auth.currentUser?.email === ADMIN_EMAIL;
-            const displayData = isAdmin ? records : records.slice(0, 100);
-            body.innerHTML = displayData.map(r => `<tr><td>${r.date} ${r.time || ''}</td><td><b>${r.location}</b></td><td>${r.material}</td><td style="text-align:center">${r.qty}</td><td>${r.user}</td><td><span class="status-badge ${r.status==='OK'?'bg-ok':(r.status==='VACIO'?'bg-empty':'bg-err')}">${r.status}</span></td><td class="adm-only">${isAdmin ? `<button class="btn-delete" onclick="deleteRecord('${r.firebaseId}')">🗑️</button>` : ''}</td></tr>`).join('');
+            b.innerHTML = (isAdmin ? records : records.slice(0, 100)).map(r => `<tr><td>${r.date} ${r.time}</td><td><b>${r.location}</b></td><td>${r.material}</td><td>${r.qty}</td><td>${r.user}</td><td><span class="status-badge ${r.status==='OK'?'bg-ok':(r.status==='VACIO'?'bg-empty':'bg-err')}">${r.status}</span></td><td class="adm-only">${isAdmin ? `<button class="btn-delete" onclick="deleteRecord('${r.firebaseId}')">🗑️</button>` : ''}</td></tr>`).join('');
             if(isAdmin) document.querySelectorAll('.adm-only').forEach(el => el.style.display = 'flex');
             updateStatsUI();
         }
-
         function renderUserSummary() {
-            const body = document.getElementById('user-summary-body');
-            if(!body) return;
-            const summary = new Map();
-            records.forEach(r => {
-                if(!summary.has(r.user)) summary.set(r.user, { ubis: 0, pieces: 0 });
-                const s = summary.get(r.user);
-                s.ubis++;
-                s.pieces += (r.qty || 0);
-            });
-            body.innerHTML = Array.from(summary.entries()).map(([u, s]) => {
-                const config = userConfigs.get(u.toLowerCase() + "@grupocargo.com") || {};
-                return `<tr><td>${u}</td><td>${config.zone || '-'}</td><td>${s.ubis}</td><td>${s.pieces}</td></tr>`;
-            }).join('');
+            const b = document.getElementById('user-summary-body'); if(!b) return;
+            const s = new Map();
+            records.forEach(r => { if(!s.has(r.user)) s.set(r.user, { u: 0, q: 0 }); const v = s.get(r.user); v.u++; v.q += (r.qty || 0); });
+            b.innerHTML = Array.from(s.entries()).map(([u, v]) => `<tr><td>${u}</td><td>${(userConfigs.get(u.toLowerCase()+"@grupocargo.com")||{}).zone || '-'}</td><td>${v.u}</td><td>${v.q}</td></tr>`).join('');
         }
-
         window.exportCSV = () => {
-            if(!records.length) return showAlert("SIN DATOS", "No hay registros.", null, 'info');
-            let csv = "Fecha,Hora,Usuario,Ubicacion,Material,Doc_Inventario,Storage,Stock_Teorico,Stock_Fisico,Diferencia,Estado\n";
-            records.forEach(r => { csv += `${r.date},${r.time||''},${r.user},${r.location},${r.material},${r.doc||''},${r.storage||''},${r.theoretical??''},${r.qty},${r.diff??''},${r.status}\n`; });
-            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Inventario_Cargo_${Date.now()}.csv`; a.click();
+            let csv = "Fecha,Hora,Usuario,Ubicacion,Material,Doc_Inventario,Storage,Theoretical,Qty,Diff,Status\n";
+            records.forEach(r => csv += `${r.date},${r.time},${r.user},${r.location},${r.material},${r.doc},${r.storage},${r.theoretical},${r.qty},${r.diff},${r.status}\n`);
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'})); a.download = `Inventario_${Date.now()}.csv`; a.click();
         };
-
         function showAlert(title, msg, confirmCb, theme = 'warning', intruderCb = null) {
-            const modalTitle = document.getElementById('modal-title');
-            const modalMsg = document.getElementById('modal-msg');
-            const box = document.getElementById('modal-box');
-            const btnConfirm = document.getElementById('modal-confirm-btn');
-            const btnIntruder = document.getElementById('modal-intruder-btn');
-            const btnCancel = document.getElementById('modal-cancel-btn');
-            const btnOk = document.getElementById('modal-ok-btn');
-            const icon = document.getElementById('modal-icon');
-
-            modalTitle.innerText = title;
-            modalMsg.innerText = msg;
-            box.className = 'modal-box ' + theme + '-mode';
-            
-            if(theme === 'error') icon.innerText = '⛔';
-            else if(theme === 'success') icon.innerText = '✅';
-            else icon.innerText = '⚠️';
-            
-            if(!confirmCb && !intruderCb) {
-                btnConfirm.style.display = 'none'; btnIntruder.style.display = 'none'; btnCancel.style.display = 'none'; 
-                btnOk.style.display = 'block'; 
-                btnOk.onclick = () => window.closeModal(); 
-            } else if (confirmCb && !intruderCb) {
-                btnOk.style.display = 'none'; btnIntruder.style.display = 'none'; btnCancel.style.display = 'block';
-                btnConfirm.style.display = 'block'; btnConfirm.innerText = "CONFIRMAR";
-                btnConfirm.className = theme === 'success' ? 'modal-btn confirm-ok' : 'modal-btn danger';
-                btnConfirm.onclick = () => { confirmCb(); window.closeModal(); }; 
-            } else {
-                btnOk.style.display = 'none'; btnCancel.style.display = 'block';
-                btnConfirm.style.display = 'block'; btnConfirm.innerText = "GUARDAR IGUAL";
-                btnConfirm.className = 'modal-btn danger';
-                btnConfirm.onclick = () => { confirmCb(); window.closeModal(); };
-                btnIntruder.style.display = 'block'; btnIntruder.onclick = intruderCb;
-            }
-            
-            // Especial: Si hay callback en error (limpiar ubicacion)
-            if (theme === 'error' && typeof confirmCb === 'function') {
-                btnOk.onclick = () => { confirmCb(); window.closeModal(); };
-            }
-
+            const box = document.getElementById('modal-box'), btnC = document.getElementById('modal-confirm-btn'), btnI = document.getElementById('modal-intruder-btn'), btnX = document.getElementById('modal-cancel-btn'), btnO = document.getElementById('modal-ok-btn');
+            document.getElementById('modal-title').innerText = title; document.getElementById('modal-msg').innerText = msg;
+            box.className = 'modal-box ' + theme + '-mode'; document.getElementById('modal-icon').innerText = theme === 'error' ? '⛔' : (theme === 'success' ? '✅' : '⚠️');
+            if(!confirmCb && !intruderCb) { btnC.style.display = btnI.style.display = btnX.style.display = 'none'; btnO.style.display = 'block'; }
+            else if (confirmCb && !intruderCb) { btnO.style.display = btnI.style.display = 'none'; btnX.style.display = btnC.style.display = 'block'; btnC.innerText = "CONFIRMAR"; btnC.className = theme === 'success' ? 'modal-btn confirm-ok' : 'modal-btn danger'; btnC.onclick = confirmCb; }
+            else { btnO.style.display = 'none'; btnX.style.display = btnC.style.display = btnI.style.display = 'block'; btnC.innerText = "GUARDAR"; btnC.onclick = () => { confirmCb(); window.closeModal(); }; btnI.onclick = intruderCb; }
+            if (typeof confirmCb === 'function' && !intruderCb && (theme === 'error' || theme === 'success')) btnO.onclick = () => { confirmCb(); window.closeModal(); };
             document.getElementById('modal-overlay').style.display = 'flex';
         }
-
         function playSound(t) {
-            const c=new(window.AudioContext||window.webkitAudioContext)(), o=c.createOscillator(), g=c.createGain();
-            o.connect(g); g.connect(c.destination);
-            if(t==='error'){ o.type='sawtooth'; o.frequency.value=150; g.gain.value=0.2; o.start(); o.stop(c.currentTime+0.2); }
-            else{ o.frequency.value=800; g.gain.value=0.1; o.start(); o.stop(c.currentTime+0.1); }
+            const c=new AudioContext(), o=c.createOscillator(), g=c.createGain(); o.connect(g); g.connect(c.destination);
+            if(t==='error'){ o.type='sawtooth'; o.frequency.value=150; g.gain.value=0.1; o.start(); o.stop(c.currentTime+0.2); }
+            else{ o.frequency.value=800; g.gain.value=0.05; o.start(); o.stop(c.currentTime+0.1); }
         }
 
         // --- GESTOS ---
-        let touchStartX = 0;
-        document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, {passive: true});
+        let tx = 0, ty = 0;
+        document.addEventListener('touchstart', e => { tx = e.changedTouches[0].screenX; ty = e.changedTouches[0].screenY; }, {passive: true});
         document.addEventListener('touchend', e => {
-            const touchEndX = e.changedTouches[0].screenX;
-            if (touchStartX - touchEndX > 120) window.switchView('historial'); 
-            if (touchEndX - touchStartX > 120) window.switchView('conteo'); 
+            const dx = tx - e.changedTouches[0].screenX, dy = ty - e.changedTouches[0].screenY;
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 100) {
+                const isAdmin = auth.currentUser?.email === ADMIN_EMAIL, active = document.querySelector('.tab-btn.active').id;
+                if (dx > 0) { if (active === 'tab-conteo') window.switchView('historial'); else if (active === 'tab-historial' && isAdmin) window.switchView('config'); }
+                else { if (active === 'tab-config') window.switchView('historial'); else if (active === 'tab-historial') window.switchView('conteo'); }
+            }
         }, {passive: true});
 
-        // --- LISTENERS TECLADO ---
-        document.getElementById('location').addEventListener('keydown', e => { if(e.key === 'Enter') { if(window.checkLocation(e.target.value.toUpperCase())) document.getElementById('material').focus(); } });
-        document.getElementById('material').addEventListener('keydown', e => { if(e.key === 'Enter') { window.verifyMaterialBeforeQty(() => document.getElementById('qty').focus()); } });
+        document.getElementById('location').addEventListener('keydown', e => { if(e.key === 'Enter') if(window.checkLocation(e.target.value.toUpperCase())) document.getElementById('material').focus(); });
+        document.getElementById('material').addEventListener('keydown', e => { if(e.key === 'Enter') window.verifyMaterialBeforeQty(() => document.getElementById('qty').focus()); });
         document.getElementById('qty').addEventListener('keydown', e => { if(e.key === 'Enter') window.validateAndSave(); });
 
         document.addEventListener('DOMContentLoaded', async () => {
             await initAuth();
-
-            // MANIFEST DINÁMICO PARA ICONO ANDROID STANDALONE
-            const manifest = {
-                "name": "Inventario Cargo",
-                "short_name": "InvCargo",
-                "start_url": ".",
-                "display": "standalone",
-                "orientation": "portrait",
-                "background_color": "#0D2334",
-                "theme_color": "#0D2334",
-                "icons": [
-                    { "src": "logo.png", "sizes": "192x192", "type": "image/png" },
-                    { "src": "logo.png", "sizes": "512x512", "type": "image/png" }
-                ]
-            };
-            const stringManifest = JSON.stringify(manifest);
-            const blob = new Blob([stringManifest], {type: 'application/json'});
-            const manifestURL = URL.createObjectURL(blob);
-            const link = document.createElement('link');
-            link.rel = 'manifest';
-            link.href = manifestURL;
-            document.head.appendChild(link);
+            const manifest = { "name": "Inventario Cargo", "short_name": "InvCargo", "start_url": ".", "display": "standalone", "orientation": "portrait", "background_color": "#0D2334", "theme_color": "#0D2334", "icons": [{ "src": "logo.png", "sizes": "192x192", "type": "image/png" }, { "src": "logo.png", "sizes": "512x512", "type": "image/png" }] };
+            const link = document.createElement('link'); link.rel = 'manifest'; link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type: 'application/json'})); document.head.appendChild(link);
+            
+            // Inyección de Service Worker dinámico para habilitar INSTALACIÓN PWA
+            const swCode = `self.addEventListener('fetch', function(event) { event.respondWith(fetch(event.request)); });`;
+            const swBlob = new Blob([swCode], {type: 'application/javascript'});
+            const swUrl = URL.createObjectURL(swBlob);
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register(swUrl).catch(() => {});
         });
     </script>
 </body>
