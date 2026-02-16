@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0D2334">
     
-    <!-- Configuración PWA -->
+    <!-- Configuración PWA para Pantalla Completa -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,7 +15,7 @@
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="icon" type="image/png" href="logo.png">
     
-    <title>Inventario Pro - V31.17</title>
+    <title>Inventario Pro - V31.19</title>
     <style>
         :root {
             --navy-main: #0D2334;
@@ -74,8 +74,8 @@
         h1 { margin: 0; font-size: 16px; text-align: center; font-weight: 700; }
         .header-btn-upload { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; justify-self: end; }
 
-        .tabs { display: flex; gap: 20px; justify-content: center; }
-        .tab-btn { background: transparent; border: none; color: rgba(255, 255, 255, 0.6); font-size: 14px; padding-bottom: 10px; flex: 1; text-align: center; transition: 0.2s; border-bottom: 3px solid transparent; cursor: pointer; }
+        .tabs { display: flex; gap: 10px; justify-content: center; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { background: transparent; border: none; color: rgba(255, 255, 255, 0.6); font-size: 12px; padding-bottom: 10px; flex: 1; text-align: center; transition: 0.2s; border-bottom: 3px solid transparent; cursor: pointer; min-width: 80px; }
         .tab-btn.active { color: white; font-weight: 700; border-bottom-color: var(--red-accent); }
 
         /* --- VISTAS --- */
@@ -135,9 +135,8 @@
             background: rgba(13, 35, 52, 0.85); z-index: 1000;
             align-items: center; justify-content: center; backdrop-filter: blur(2px);
         }
-        .modal-box { background: white; width: 90%; max-width: 340px; border-radius: 16px; padding: 25px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 4px solid transparent; transition: border 0.2s; }
+        .modal-box { background: white; width: 90%; max-width: 340px; border-radius: 16px; padding: 25px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 4px solid transparent; transition: border 0.3s; }
         
-        /* Modos de Color de Modal */
         .modal-box.error-mode { border-color: var(--danger); }
         .modal-box.success-mode { border-color: var(--success); }
         .modal-box.warning-mode { border-color: var(--warning); }
@@ -172,7 +171,7 @@
         <div class="login-box">
             <img src="logo.png" alt="Logo" class="login-logo" onerror="this.src='https://img.icons8.com/color/144/box--v1.png'">
             <h2>GRUPO CARGO</h2>
-            <span class="version-tag">SISTEMA INVENTARIO V31.17</span>
+            <span class="version-tag">SISTEMA INVENTARIO V31.19</span>
             <input type="text" id="login-user" placeholder="Usuario (ej: luciano)">
             <input type="password" id="login-pass" placeholder="Contraseña">
             <button class="btn btn-primary" onclick="loginUsuario()">INGRESAR</button>
@@ -187,7 +186,8 @@
         </div>
         <div class="tabs">
             <button class="tab-btn active" id="tab-conteo" onclick="switchView('conteo')">CONTEO</button>
-            <button class="tab-btn" id="tab-historial" onclick="switchView('historial')">HISTORIAL (<span id="count-badge">0</span>)</button>
+            <button class="tab-btn" id="tab-historial" onclick="switchView('historial')">HISTORIAL</button>
+            <button class="tab-btn adm-only" id="tab-config" onclick="switchView('config')">CONFIG</button>
         </div>
     </header>
 
@@ -206,16 +206,9 @@
                     <input type="text" id="user-display" disabled style="font-weight:700; background:#F1F5F9;">
                 </div>
                 <div>
-                    <label>Zona</label>
-                    <input type="text" id="zone-filter" placeholder="Ej: A1" maxlength="3" style="text-transform:uppercase;">
-                </div>
-            </div>
-            <div class="adm-only" style="margin-top:5px;">
-                <label>Rango Intrusos</label>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 70px; gap:8px;">
-                    <input type="number" id="intruder-start" value="1">
-                    <input type="number" id="intruder-end" value="300">
-                    <button id="btn-lock-range" class="btn-lock" onclick="toggleRangeLock()">🔓 FIJAR</button>
+                    <label>Sector Asignado</label>
+                    <input type="text" id="zone-display" disabled style="font-weight:700; background:#F1F5F9; text-transform:uppercase;">
+                    <input type="hidden" id="zone-filter">
                 </div>
             </div>
         </div>
@@ -256,13 +249,13 @@
                     <span class="stat-val" id="reads-count">0</span>
                     <span class="stat-lbl">Lecturas</span>
                 </div>
-                <div class="stat-card">
-                    <span class="stat-val" id="writes-count">0</span>
-                    <span class="stat-lbl">Escrituras</span>
-                </div>
                 <div class="stat-card" style="background: #FFFBEB; border-color: #FDE68A;">
                     <span class="stat-val" id="progress-percent" style="color: #92400E;">0%</span>
                     <span class="stat-lbl" style="color: #92400E;">% Avance</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-val" id="count-badge">0</span>
+                    <span class="stat-lbl">Conteos</span>
                 </div>
             </div>
             <div class="card" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; padding: 10px;">
@@ -283,6 +276,44 @@
                         <tr><th>Fecha/Hora</th><th>Ubi</th><th>Mat</th><th>Cant</th><th>Operario</th><th>Estado</th><th class="adm-only"></th></tr>
                     </thead>
                     <tbody id="records-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-config" class="view container adm-only">
+        <div class="card">
+            <h3>Configuración por Usuario</h3>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">Configure el sector y rango de intrusos manual para cada operario activo.</p>
+            
+            <label>Seleccionar Usuario</label>
+            <select id="config-user-select" style="width: 100%; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #E2E8F0;"></select>
+            
+            <label>Sector / Zona (Prefijo)</label>
+            <input type="text" id="config-zone" placeholder="Ej: A1" maxlength="3" style="text-transform: uppercase;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>INV Inicio</label>
+                    <input type="number" id="config-inv-start" placeholder="1">
+                </div>
+                <div>
+                    <label>INV Fin</label>
+                    <input type="number" id="config-inv-end" placeholder="300">
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="saveUserConfig()">GUARDAR CONFIGURACIÓN</button>
+        </div>
+        
+        <div class="card">
+            <h3>Resumen por Usuario</h3>
+            <div class="table-wrap">
+                <table style="min-width: 100%;">
+                    <thead>
+                        <tr><th>Operario</th><th>Sector</th><th>Ubis</th><th>Piezas</th></tr>
+                    </thead>
+                    <tbody id="user-summary-body"></tbody>
                 </table>
             </div>
         </div>
@@ -315,7 +346,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, getDocs, writeBatch, query, limit } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, getDocs, writeBatch, query, limit, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
@@ -340,7 +371,9 @@
         let masterData = new Map();
         let MASTER_CODES = new Set();
         let records = [];
-        let intruderConfig = JSON.parse(localStorage.getItem('inv_config_v31')) || { start: 1, end: 300, locked: false };
+        let userConfigs = new Map();
+        
+        let currentUserConfig = { zone: '', start: 1, end: 300 };
         let scanningTarget = null;
         let barcodeDetector = null;
         let pendingSaveData = null;
@@ -390,6 +423,7 @@
             if (!scan) return "";
             const cleanScan = scan.trim().toUpperCase();
             if (MASTER_CODES.has(cleanScan)) return cleanScan;
+            // Match por primeros 9 caracteres corregido para intrusos y conteos
             for (let code of MASTER_CODES) {
                 if (cleanScan.length >= 9 && code.length >= 9 && cleanScan.substring(0,9) === code.substring(0,9)) {
                     return code;
@@ -406,9 +440,7 @@
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch(e) {
-                console.warn("Auth init error:", e.code);
-            }
+            } catch(e) { console.warn("Auth init error:", e.code); }
         };
 
         // --- LOGIN ---
@@ -423,7 +455,7 @@
 
         window.logout = () => signOut(auth);
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             const loginScr = document.getElementById('login-screen');
             const mainHdr = document.getElementById('main-header');
             
@@ -435,11 +467,11 @@
                 
                 const isAdmin = user.email === ADMIN_EMAIL;
                 document.querySelectorAll('.adm-only').forEach(el => el.style.display = isAdmin ? 'grid' : 'none');
-                const historyInfo = document.getElementById('user-history-info');
-                if (isAdmin && historyInfo) historyInfo.style.display = 'none';
 
                 initRealtimeSync();
-                loadLocalMaster(); 
+                loadLocalMaster();
+                loadGlobalConfigs();
+                listenToMyConfig(user.email);
             } else if (user && user.isAnonymous) {
                 if(loginScr) loginScr.style.display = 'flex';
                 if(mainHdr) mainHdr.style.display = 'none';
@@ -451,6 +483,51 @@
             }
         });
 
+        // --- CONFIGURACIONES POR USUARIO ---
+        function loadGlobalConfigs() {
+            const collRef = collection(db, "artifacts", appIdActual, "public", "data", "configs");
+            onSnapshot(collRef, (snap) => {
+                const userSelect = document.getElementById('config-user-select');
+                const existingUsers = new Set();
+                snap.forEach(d => {
+                    userConfigs.set(d.id, d.data());
+                    existingUsers.add(d.id);
+                });
+                if(userSelect) {
+                    const currentVal = userSelect.value;
+                    userSelect.innerHTML = Array.from(existingUsers).map(u => `<option value="${u}">${u.split('@')[0].toUpperCase()}</option>`).join('');
+                    if(existingUsers.has(currentVal)) userSelect.value = currentVal;
+                }
+                renderUserSummary();
+            });
+        }
+
+        function listenToMyConfig(email) {
+            const docRef = doc(db, "artifacts", appIdActual, "public", "data", "configs", email);
+            onSnapshot(docRef, (d) => {
+                if(d.exists()) {
+                    currentUserConfig = d.data();
+                    const zoneDisp = document.getElementById('zone-display');
+                    const zoneFilt = document.getElementById('zone-filter');
+                    if(zoneDisp) zoneDisp.value = currentUserConfig.zone || 'SIN ASIGNAR';
+                    if(zoneFilt) zoneFilt.value = currentUserConfig.zone || '';
+                }
+            });
+        }
+
+        window.saveUserConfig = async () => {
+            const email = document.getElementById('config-user-select').value;
+            const zone = document.getElementById('config-zone').value.trim().toUpperCase();
+            const start = parseInt(document.getElementById('config-inv-start').value);
+            const end = parseInt(document.getElementById('config-inv-end').value);
+            if(!email || isNaN(start) || isNaN(end)) return showAlert("ERROR", "Complete los campos del rango.", null, 'error');
+            try {
+                const docRef = doc(db, "artifacts", appIdActual, "public", "data", "configs", email);
+                await setDoc(docRef, { zone, start, end }, { merge: true });
+                showAlert("ÉXITO", "Configuración guardada para " + email, null, 'success');
+            } catch(e) { showAlert("ERROR", "No se pudo guardar la configuración.", null, 'error'); }
+        };
+
         function initRealtimeSync() {
             const collRef = collection(db, "artifacts", appIdActual, "public", "data", "conteos");
             onSnapshot(collRef, (snap) => {
@@ -461,25 +538,8 @@
                 else estimatedReads += 1;
                 records.sort((a, b) => b.id - a.id);
                 renderTable();
-            }, (err) => {
-                console.error("Sync Error:", err.code);
-            });
-        }
-
-        function updateStatsUI() {
-            const readsEl = document.getElementById('reads-count');
-            const writesEl = document.getElementById('writes-count');
-            const progressEl = document.getElementById('progress-percent');
-            
-            if (readsEl) readsEl.innerText = estimatedReads.toLocaleString();
-            if (writesEl) writesEl.innerText = estimatedWrites.toLocaleString();
-            
-            if (progressEl && masterData.size > 0) {
-                const uniqueCountedMaster = new Set(records.filter(r => !r.location.startsWith("INV") && r.status !== 'ERROR').map(r => r.location));
-                const totalInMaster = masterData.size;
-                const percent = Math.round((uniqueCountedMaster.size / totalInMaster) * 100);
-                progressEl.innerText = percent + "%";
-            }
+                renderUserSummary();
+            }, (err) => console.error("Sync Error:", err.code));
         }
 
         // --- MAESTRO ---
@@ -552,7 +612,10 @@
             
             const clearAndFocus = () => {
                 const inp = document.getElementById('location');
-                if(inp) { inp.value = ''; inp.focus(); }
+                if(inp) { 
+                    inp.value = ''; 
+                    inp.focus(); 
+                }
             };
 
             if (zone && !ubi.startsWith(zone)) {
@@ -631,7 +694,6 @@
                     }
                 }
                 pendingSaveData = { id: Date.now(), date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), user: (auth.currentUser.email ? auth.currentUser.email.split('@')[0] : 'ANON').toUpperCase(), location: ubi, material: finalMat, qty, theoretical, storage: st, doc: dc, status, diff };
-                
                 showAlert("REVISIÓN DE CONTEO", `UBICACIÓN: ${ubi}\nMATERIAL: ${finalMat}\nCANTIDAD: ${qty}\n\n¿Los datos son correctos?`, confirmSave, modalTheme);
             });
         };
@@ -648,17 +710,16 @@
             if(pendingSaveData) { 
                 const isIntruder = pendingSaveData.status.startsWith('INTRUSO');
                 const originalUbi = originalPendingLocation;
-                
                 saveRecord(pendingSaveData); 
                 pendingSaveData = null; 
                 window.closeModal(); 
                 
-                // FLUJO DE CONTINUIDAD TRAS INTRUSO
+                // FLUJO DE CONTINUIDAD TRAS INTRUSO (Restaurado)
                 if (isIntruder && originalUbi) {
                     const locInput = document.getElementById('location');
-                    if (locInput) {
-                        locInput.value = originalUbi;
-                        document.getElementById('material').focus();
+                    if (locInput) { 
+                        locInput.value = originalUbi; 
+                        document.getElementById('material').focus(); 
                     }
                     originalPendingLocation = null;
                 }
@@ -667,27 +728,24 @@
 
         function handleIntruderRegistration() {
             window.closeModal();
-            const start = intruderConfig.locked ? intruderConfig.start : (parseInt(document.getElementById('intruder-start').value) || 1);
-            const end = intruderConfig.locked ? intruderConfig.end : (parseInt(document.getElementById('intruder-end').value) || 300);
+            const start = currentUserConfig.start || 1;
+            const end = currentUserConfig.end || 300;
             let found = null;
             for(let i = start; i <= end; i++) {
                 const cand = "INV" + String(i).padStart(3, '0');
                 if (!records.some(r => r.location === cand)) { found = cand; break; }
             }
-            if (!found) return showAlert("SIN HUECOS", "Sin INV libres.", null, 'error');
+            if (!found) return showAlert("SIN HUECOS", "Sin INV libres en su rango.", null, 'error');
             
             const matScanned = document.getElementById('material').value.trim().toUpperCase();
-            const matchedMat = getMatchedMaterial(matScanned); 
+            const matchedMat = getMatchedMaterial(matScanned); // Match con el maestro corregido
             
             currentIntruderData = { ubi: found, mat: matchedMat };
-            const locDisp = document.getElementById('intruder-location-display');
-            const matDisp = document.getElementById('intruder-material-display');
-            const qtyInp = document.getElementById('intruder-qty-input');
-            if(locDisp) locDisp.innerText = found;
-            if(matDisp) matDisp.innerText = matchedMat;
-            if(qtyInp) qtyInp.value = '';
+            document.getElementById('intruder-location-display').innerText = found;
+            document.getElementById('intruder-material-display').innerText = matchedMat;
+            document.getElementById('intruder-qty-input').value = '';
             document.getElementById('intruder-modal-overlay').style.display = 'flex';
-            setTimeout(() => { if(qtyInp) qtyInp.focus(); }, 150);
+            setTimeout(() => { if(document.getElementById('intruder-qty-input')) document.getElementById('intruder-qty-input').focus(); }, 150);
         }
 
         document.getElementById('btn-save-intruder').onclick = async () => {
@@ -699,7 +757,6 @@
             
             window.closeIntruderModal();
             pendingSaveData = record;
-            // Confirmación de intruso con solo 2 botones
             showAlert("CONFIRMAR INTRUSO", `Asignando a: ${record.location}\nMaterial: ${record.material}\nCantidad: ${record.qty}\n\n¿Confirmar registro?`, confirmSave, 'warning');
         };
 
@@ -738,7 +795,7 @@
             document.getElementById('camera-container').style.display = 'none';
         };
 
-        // --- ADM ---
+        // --- ADM ACTIONS ---
         window.deleteRecord = async (id) => {
             showAlert("¿ELIMINAR?", "Se borrará permanentemente.", () => {
                 deleteDoc(doc(db, "artifacts", appIdActual, "public", "data", "conteos", id));
@@ -780,6 +837,22 @@
             updateStatsUI();
         }
 
+        function renderUserSummary() {
+            const body = document.getElementById('user-summary-body');
+            if(!body) return;
+            const summary = new Map();
+            records.forEach(r => {
+                if(!summary.has(r.user)) summary.set(r.user, { ubis: 0, pieces: 0 });
+                const s = summary.get(r.user);
+                s.ubis++;
+                s.pieces += (r.qty || 0);
+            });
+            body.innerHTML = Array.from(summary.entries()).map(([u, s]) => {
+                const config = userConfigs.get(u.toLowerCase() + "@grupocargo.com") || {};
+                return `<tr><td>${u}</td><td>${config.zone || '-'}</td><td>${s.ubis}</td><td>${s.pieces}</td></tr>`;
+            }).join('');
+        }
+
         window.exportCSV = () => {
             if(!records.length) return showAlert("SIN DATOS", "No hay registros.", null, 'info');
             let csv = "Fecha,Hora,Usuario,Ubicacion,Material,Doc_Inventario,Storage,Stock_Teorico,Stock_Fisico,Diferencia,Estado\n";
@@ -800,45 +873,30 @@
 
             modalTitle.innerText = title;
             modalMsg.innerText = msg;
-            
-            // RESET MODAL THEME
             box.className = 'modal-box ' + theme + '-mode';
             
             if(theme === 'error') icon.innerText = '⛔';
             else if(theme === 'success') icon.innerText = '✅';
             else icon.innerText = '⚠️';
             
-            // LÓGICA DE BOTONES: Si no hay callback de confirmación o intruso, es solo informativa
             if(!confirmCb && !intruderCb) {
-                btnConfirm.style.display = 'none'; 
-                btnIntruder.style.display = 'none'; 
-                btnCancel.style.display = 'none'; 
+                btnConfirm.style.display = 'none'; btnIntruder.style.display = 'none'; btnCancel.style.display = 'none'; 
                 btnOk.style.display = 'block'; 
                 btnOk.onclick = () => window.closeModal(); 
-            } 
-            // Modo Confirmación de Conteo (Solo 2 botones: Confirmar / Cancelar)
-            else if (confirmCb && !intruderCb) {
-                btnOk.style.display = 'none';
-                btnIntruder.style.display = 'none';
-                btnCancel.style.display = 'block';
-                btnConfirm.style.display = 'block';
-                btnConfirm.innerText = "CONFIRMAR";
+            } else if (confirmCb && !intruderCb) {
+                btnOk.style.display = 'none'; btnIntruder.style.display = 'none'; btnCancel.style.display = 'block';
+                btnConfirm.style.display = 'block'; btnConfirm.innerText = "CONFIRMAR";
                 btnConfirm.className = theme === 'success' ? 'modal-btn confirm-ok' : 'modal-btn danger';
-                btnConfirm.onclick = () => { confirmCb(); }; 
-            } 
-            // Modo Material Inesperado (3 botones o flujo especial con Intruso)
-            else {
-                btnOk.style.display = 'none'; 
-                btnCancel.style.display = 'block';
-                btnConfirm.style.display = 'block';
-                btnConfirm.innerText = "GUARDAR IGUAL";
+                btnConfirm.onclick = () => { confirmCb(); window.closeModal(); }; 
+            } else {
+                btnOk.style.display = 'none'; btnCancel.style.display = 'block';
+                btnConfirm.style.display = 'block'; btnConfirm.innerText = "GUARDAR IGUAL";
                 btnConfirm.className = 'modal-btn danger';
                 btnConfirm.onclick = () => { confirmCb(); window.closeModal(); };
-                btnIntruder.style.display = 'block';
-                btnIntruder.onclick = intruderCb;
+                btnIntruder.style.display = 'block'; btnIntruder.onclick = intruderCb;
             }
             
-            // Caso especial: Si es un error pero tiene un callback para limpiar campos
+            // Especial: Si hay callback en error (limpiar ubicacion)
             if (theme === 'error' && typeof confirmCb === 'function') {
                 btnOk.onclick = () => { confirmCb(); window.closeModal(); };
             }
@@ -870,12 +928,13 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await initAuth();
 
-            // MANIFEST DINÁMICO PARA ICONO ANDROID
+            // MANIFEST DINÁMICO PARA ICONO ANDROID STANDALONE
             const manifest = {
                 "name": "Inventario Cargo",
                 "short_name": "InvCargo",
                 "start_url": ".",
                 "display": "standalone",
+                "orientation": "portrait",
                 "background_color": "#0D2334",
                 "theme_color": "#0D2334",
                 "icons": [
