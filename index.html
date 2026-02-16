@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="icon" type="image/png" href="logo.png">
     
-    <title>Inventario Pro - V31.23</title>
+    <title>Inventario Pro - V31.25</title>
     <style>
         :root {
             --navy-main: #0D2334;
@@ -51,7 +51,7 @@
             background: white; width: 100%; max-width: 340px; border-radius: 16px;
             padding: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
-        .login-logo { width: 120px; margin-bottom: 20px; border-radius: 10px; }
+        .login-logo { width: 150px; margin-bottom: 20px; border-radius: 10px; }
 
         /* --- HEADER --- */
         header {
@@ -80,14 +80,14 @@
 
         /* --- FORMULARIOS --- */
         label { display: block; font-size: 11px; font-weight: 700; color: var(--navy-main); margin-bottom: 5px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #E2E8F0; border-radius: 8px; background-color: var(--input-bg); color: var(--text-main); margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #E2E8F0; border-radius: 8px; background-color: var(--input-bg); color: var(--text-main); margin-bottom: 15px; font-weight: 500; }
         input:focus { background-color: #fff; border-color: var(--navy-main); outline: none; }
         
         .input-wrapper { position: relative; }
         .input-action-btn { position: absolute; right: 2px; top: 22px; width: 40px; height: 40px; background: var(--navy-main); color: white; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
 
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 5px; }
-        .btn-primary { background-color: var(--red-accent); color: white; }
+        .btn-primary { background-color: var(--red-accent); color: white; box-shadow: 0 4px 6px rgba(215,15,39,0.2); }
         .btn-secondary { background-color: #E2E8F0; color: var(--navy-main); }
         .btn-danger { background-color: var(--danger); color: white; }
         .btn-navy { background-color: var(--navy-main); color: white; }
@@ -101,31 +101,55 @@
         /* --- TABLA --- */
         .table-wrap { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 600px; }
-        th { background: var(--navy-main); color: white; padding: 10px; text-align: left; }
+        th { background: var(--navy-main); color: white; padding: 10px; text-align: left; position: sticky; top: 0; }
         td { padding: 10px; border-bottom: 1px solid #eee; white-space: nowrap; }
-        .status-badge { padding: 3px 6px; border-radius: 4px; font-weight: 700; font-size: 9px; }
+        .status-badge { padding: 3px 6px; border-radius: 4px; font-weight: 700; font-size: 9px; text-transform: uppercase; }
         .bg-ok { background: #DCFCE7; color: #166534; }
         .bg-err { background: #FEE2E2; color: #991B1B; }
 
-        /* --- MODALES --- */
-        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-box { background: white; width: 90%; max-width: 320px; border-radius: 16px; padding: 25px; text-align: center; border-top: 5px solid transparent; }
-        .modal-box.warning { border-top-color: var(--warning); }
-        .modal-box.success { border-top-color: var(--success); }
-        .modal-box.error { border-top-color: var(--danger); }
-        .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 10px; color: var(--navy-main); }
-        .modal-msg { font-size: 14px; color: #444; margin-bottom: 20px; line-height: 1.4; white-space: pre-wrap; }
-        .modal-buttons { display: flex; flex-direction: column; gap: 8px; }
+        /* --- MODALES REFORZADOS --- */
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13, 35, 52, 0.9); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-box { background: white; width: 90%; max-width: 320px; border-radius: 16px; padding: 25px; text-align: center; border-top: 6px solid transparent; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        
+        /* ESTILOS DE MODAL */
+        .modal-box.warning-mode { border-top-color: var(--warning); }
+        .modal-box.warning-mode .modal-title { color: var(--warning); }
+        
+        .modal-box.success-mode { border-top-color: var(--success); }
+        .modal-box.success-mode .modal-title { color: var(--success); }
+        
+        .modal-box.error-mode { border-top-color: var(--danger); }
+        .modal-box.error-mode .modal-title { color: var(--danger); }
+
+        .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 10px; }
+        .modal-msg { font-size: 15px; color: #444; margin-bottom: 25px; line-height: 1.5; white-space: pre-wrap; }
+        
+        .modal-buttons { display: flex; flex-direction: column; gap: 10px; }
+        .modal-btn { width: 100%; padding: 14px; border-radius: 10px; font-weight: 800; border: none; cursor: pointer; font-size: 14px; text-transform: uppercase; }
+        
+        .modal-btn.confirm-ok { background: var(--success); color: white; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
+        .modal-btn.cancel { background: #E2E8F0; color: var(--navy-main); }
+        .modal-btn.danger { background: var(--red-accent); color: white; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); }
+        .modal-btn.intruder { background: var(--warning); color: white; }
+        .modal-btn.info { background: var(--navy-main); color: white; }
+
+        /* MODAL INTRUSO */
+        #intruder-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13, 35, 52, 0.9); z-index: 2100; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .intruder-box { background: white; width: 90%; max-width: 340px; border-radius: 16px; padding: 25px; text-align: center; border-top: 6px solid var(--warning); }
+        #intruder-location-display { font-size: 32px; font-weight: 900; color: var(--red-accent); margin: 10px 0; letter-spacing: 1px; }
+        #intruder-material-display { font-size: 16px; font-weight: 700; color: var(--navy-main); background: #F1F5F9; padding: 8px; border-radius: 6px; }
 
         /* --- CAMERA --- */
         #camera-container { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 2500; flex-direction: column; }
-        video { width: 100%; height: 80%; object-fit: cover; }
-        .camera-controls { height: 20%; display: flex; align-items: center; justify-content: center; background: #000; }
+        video { width: 100%; height: 85%; object-fit: cover; }
+        .camera-controls { height: 15%; display: flex; align-items: center; justify-content: center; background: #000; }
+        .camera-overlay { position: absolute; bottom: 15%; width: 100%; text-align: center; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 2501; pointer-events: none; }
 
-        /* CLASES UTILITARIAS */
+        .btn-delete { background: #FEE2E2; color: #991B1B; border: none; border-radius: 6px; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .adm-only { display: none !important; }
         body.is-admin .adm-only { display: block !important; }
         body.is-admin .header-btn-upload.adm-only { display: flex !important; }
+        input[type="file"] { display: none; }
     </style>
 </head>
 <body>
@@ -135,7 +159,7 @@
         <div class="login-box">
             <img src="logo.png" alt="Logo" class="login-logo" onerror="this.src='https://img.icons8.com/color/144/box--v1.png'">
             <h2>GRUPO CARGO</h2>
-            <p style="font-size:12px; color:#666;">Sistema de Inventario V31.23</p>
+            <p style="font-size:12px; color:#666;">Sistema de Inventario V31.25</p>
             <input type="text" id="login-user" placeholder="Usuario">
             <input type="password" id="login-pass" placeholder="Contraseña">
             <button class="btn btn-primary" onclick="app.login()">INGRESAR</button>
@@ -159,7 +183,7 @@
     <!-- 1. PANTALLA CONTEO -->
     <div id="view-conteo" class="view active container">
         <div id="master-status" class="card" style="background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; padding:10px; display:flex; align-items:center; gap:10px;">
-            <span>⚠️</span> <b>MAESTRO NO CARGADO.</b> <small>Toque la nube arriba.</small>
+            <span>⚠️</span> <b>MAESTRO NO CARGADO.</b>
         </div>
 
         <div class="card">
@@ -226,10 +250,15 @@
     <div id="view-config" class="view container">
         <div class="card">
             <h3>1. Configurar Operario</h3>
-            <label>Seleccionar Usuario</label>
+            <label>Seleccionar Usuario (Del Historial)</label>
             <select id="cfg-user-select"></select>
+            
+            <label style="margin-top:10px;">O Escribir Usuario Nuevo</label>
+            <input type="text" id="cfg-user-manual" placeholder="ej: operario2">
+
             <label>Asignar Zona</label>
             <input type="text" id="cfg-zone" placeholder="Ej: A1">
+            
             <label>Rango de Intrusos</label>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                 <input type="number" id="cfg-start" placeholder="Inicio">
@@ -252,21 +281,39 @@
     <!-- MODAL UNIVERSAL -->
     <div id="modal-overlay">
         <div class="modal-box" id="modal-box">
+            <span id="modal-icon" style="font-size:40px; display:block; margin-bottom:10px;">⚠️</span>
             <div class="modal-title" id="modal-title"></div>
             <div class="modal-msg" id="modal-msg"></div>
             <div class="modal-buttons" id="modal-actions"></div>
         </div>
     </div>
 
+    <!-- MODAL INTRUSO (RECUPERADO) -->
+    <div id="intruder-modal-overlay">
+        <div class="intruder-box">
+            <div class="modal-title" style="color:var(--warning);">ASIGNACIÓN INTRUSO</div>
+            <div style="font-size:13px; color:#64748B;">Ubicación Asignada:</div>
+            <div id="intruder-location-display">INV-000</div>
+            <div style="font-size:13px; color:#64748B; margin-top:10px;">Material:</div>
+            <div id="intruder-material-display">MAT-000</div>
+            <label style="margin-top:15px; text-align:left;">Cantidad:</label>
+            <input type="number" id="intruder-qty-input" placeholder="0" style="font-size:24px; font-weight:800; text-align:center; color:var(--navy-main);">
+            <div class="modal-buttons">
+                <button class="modal-btn danger" id="btn-save-intruder">GUARDAR INTRUSO</button>
+                <button class="modal-btn cancel" onclick="app.closeIntruder()">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
     <!-- CAMERA -->
     <div id="camera-container">
         <video id="video" playsinline autoplay muted></video>
+        <div class="camera-overlay">ENFOQUE EL CÓDIGO</div>
         <div class="camera-controls">
             <button class="btn btn-danger" style="width:auto;" onclick="app.closeCam()">CERRAR CÁMARA</button>
         </div>
     </div>
 
-    <!-- INPUT FILE OCULTO -->
     <input type="file" id="file-picker" accept=".csv" style="display:none" onchange="app.processLocalFile(this)">
 
     <script type="module">
@@ -275,7 +322,7 @@
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-        // CONFIGURACIÓN
+        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyDI2_dfJ5WbGCoddHPaXg40yrxEZqB4ZXI", 
             authDomain: "inventarioapp-cddbe.firebaseapp.com",
@@ -292,20 +339,16 @@
         const APP_ID = "cargo-inv-v31"; 
         const ADMIN_EMAIL = "lvilla@grupocargo.com";
 
-        // ESTADO GLOBAL
         const state = {
-            master: new Map(),
-            masterCodes: new Set(),
-            records: [],
-            userConfigs: new Map(),
-            myConfig: {},
+            master: new Map(), masterCodes: new Set(),
+            records: [], userConfigs: new Map(), myConfig: {},
             reads: 0, writes: 0,
-            pending: null,
-            scanTgt: null
+            pending: null, scanTgt: null,
+            intruderData: null, originalLoc: null
         };
 
-        // --- CLASE PRINCIPAL ---
         const App = {
+            // AUTH
             login: async () => {
                 const u = document.getElementById('login-user').value.trim();
                 const p = document.getElementById('login-pass').value.trim();
@@ -316,6 +359,7 @@
             },
             logout: () => signOut(auth),
 
+            // NAV
             nav: (viewId) => {
                 document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
                 document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -326,29 +370,18 @@
                 if(viewId === 'config') tabs[2].classList.add('active');
             },
 
+            // MAESTRO
             downloadMaster: async () => {
                 const btn = document.querySelector('.header-btn-upload');
                 btn.innerHTML = "⏳";
                 try {
                     const url = await getDownloadURL(ref(storage, 'maestro.csv'));
                     const res = await fetch(url);
-                    if(!res.ok) throw new Error("Fetch failed");
                     App.processMaster(await res.text());
                     btn.innerHTML = "✅";
                 } catch(e) {
-                    console.error(e);
-                    // DIAGNÓSTICO DETALLADO
-                    if (e.code === 'storage/object-not-found') {
-                        alert("Error: No se encuentra 'maestro.csv' en Firebase Storage.");
-                    } else if (e.message.includes('Fetch')) {
-                        alert("Error de Conexión (CORS). Ejecute el comando gsutil en Google Cloud Console.");
-                    } else {
-                        alert("Error al descargar: " + e.message);
-                    }
-                    // Fallback
-                    if(confirm("¿Cargar archivo localmente?")) {
-                        document.getElementById('file-picker').click();
-                    }
+                    alert("Error nube. ¿Cargar local?");
+                    document.getElementById('file-picker').click();
                     btn.innerHTML = "☁️";
                 }
             },
@@ -380,7 +413,6 @@
                 if(c) {
                     try {
                         state.master = new Map(JSON.parse(c));
-                        state.masterCodes.clear();
                         for(let [k,v] of state.master) v.forEach(i => state.masterCodes.add(i.mat));
                         App.updateMasterUI();
                     } catch(e) { localStorage.removeItem('master_cache'); }
@@ -392,11 +424,12 @@
                 }
             },
 
+            // LÓGICA
             checkLoc: (ubi) => {
                 if(!ubi) return false;
                 const zone = document.getElementById('zone-display').value;
                 if(zone && zone !== 'SIN ASIGNAR' && !ubi.startsWith(zone)) {
-                    App.modal("ERROR", `Ubicación ${ubi} incorrecta. Zona asignada: ${zone}`, null, "error", false, null, true);
+                    App.modal("ERROR ZONA", `Ubicación ${ubi} incorrecta.`, null, "error", false, null, true);
                     return false;
                 }
                 if(state.records.some(r => r.location === ubi)) {
@@ -404,11 +437,20 @@
                     return false;
                 }
                 if(!ubi.startsWith("INV") && state.master.size > 0 && !state.master.has(ubi)) {
-                    App.modal("DESCONOCIDA", `Ubicación ${ubi} no existe en el maestro.`, null, "error", false, null, true);
+                    App.modal("DESCONOCIDA", `Ubicación ${ubi} no existe.`, null, "error", false, null, true);
                     return false;
                 }
                 return true;
             },
+            
+            findMatch: (input) => {
+                if(state.masterCodes.has(input)) return input;
+                for(let code of state.masterCodes) {
+                    if(input.length>=9 && code.length>=9 && input.substring(0,9) === code.substring(0,9)) return code;
+                }
+                return input;
+            },
+
             preSave: () => {
                 const ubi = document.getElementById('inp-location').value.trim().toUpperCase();
                 const mat = document.getElementById('inp-material').value.trim().toUpperCase();
@@ -419,7 +461,7 @@
                 if(!mat) {
                     const data = state.master.get(ubi);
                     if(!data) return alert("Ingrese material");
-                    App.modal("CONFIRMAR VACÍO", `¿Registrar ${ubi} como VACÍA?`, () => {
+                    App.modal("CONFIRMAR VACÍO", `¿Registrar ${ubi} con Stock 0?`, () => {
                         App.save({ 
                             location: ubi, material: data[0].mat, qty: 0, 
                             theoretical: data[0].stock, storage: data[0].st, doc: data[0].doc, 
@@ -432,13 +474,9 @@
                 if(isNaN(qty)) return alert("Cantidad inválida");
 
                 let finalMat = App.findMatch(mat);
-                let status = 'OK';
                 
                 if(ubi.startsWith("INV")) {
-                    status = 'INTRUSO_UBI';
-                    App.modal("CONFIRMAR INTRUSO", `Ubi: ${ubi}\nMat: ${finalMat}\nCant: ${qty}`, () => {
-                        App.save({ location: ubi, material: finalMat, qty, status, doc: 'INTRUSO' });
-                    }, "warning", false, { ubi }); // Pasamos contexto para recuperar ubicación
+                    App.setupIntruder(ubi, finalMat);
                 } else {
                     const validList = state.master.get(ubi);
                     const matchInLoc = validList.find(m => m.mat === finalMat);
@@ -453,19 +491,14 @@
                         }, "success");
                     } else {
                         const expected = validList.map(m => m.mat).join(" o ");
+                        state.originalLoc = ubi; 
                         App.modal("DISCREPANCIA", `Leído: ${finalMat}\nEsperado: ${expected}\n\n¿Qué desea hacer?`, null, "warning", true, {
                            ubi, mat: finalMat, qty, st: validList[0].st, dc: validList[0].doc
                         });
                     }
                 }
             },
-            findMatch: (input) => {
-                if(state.masterCodes.has(input)) return input;
-                for(let code of state.masterCodes) {
-                    if(input.length>=9 && code.length>=9 && input.substring(0,9) === code.substring(0,9)) return code;
-                }
-                return input;
-            },
+
             save: async (data) => {
                 const user = auth.currentUser;
                 const rec = {
@@ -479,33 +512,59 @@
                     await addDoc(collection(db, "artifacts", APP_ID, "public", "data", "conteos"), rec);
                     state.writes++; App.updateStats();
                     App.clear();
-                    // Restaurar ubicación si fue intruso
-                    if(data.status === 'INTRUSO_UBI' && data.location) {
-                         // Lógica de continuidad (se perdió en el contexto, re-implementando)
-                    }
                 } catch(e) { alert("Error guardando: " + e.message); }
             },
-            solveIntruder: (ctx) => {
+
+            // INTRUSOS
+            setupIntruder: (forceUbi = null, forceMat = null) => {
                 const s = state.myConfig.start || 1; 
                 const e = state.myConfig.end || 300;
                 let found = null;
-                for(let i=s; i<=e; i++) {
-                    const c = "INV"+String(i).padStart(3,'0');
-                    if(!state.records.some(r=>r.location===c)) { found=c; break; }
+                if(forceUbi && forceUbi.startsWith("INV")) found = forceUbi;
+                else {
+                    for(let i=s; i<=e; i++) {
+                        const c = "INV"+String(i).padStart(3,'0');
+                        if(!state.records.some(r=>r.location===c)) { found=c; break; }
+                    }
                 }
+
                 if(!found) return alert("Sin huecos INV");
                 
-                const intruderRec = {
-                    location: found, material: ctx.mat, qty: ctx.qty,
-                    status: 'INTRUSO_UBI', doc: 'INTRUSO', diff: ctx.qty, theoretical: 0
-                };
-                App.save(intruderRec);
-                
-                setTimeout(() => {
-                    document.getElementById('inp-location').value = ctx.ubi;
-                    document.getElementById('inp-material').focus();
-                }, 500);
+                const matToShow = forceMat || document.getElementById('inp-material').value;
+                state.intruderData = { ubi: found, mat: matToShow };
+
+                document.getElementById('intruder-location-display').innerText = found;
+                document.getElementById('intruder-material-display').innerText = matToShow;
+                document.getElementById('intruder-qty-input').value = '';
+                document.getElementById('intruder-modal-overlay').style.display = 'flex';
+                setTimeout(() => document.getElementById('intruder-qty-input').focus(), 200);
             },
+            
+            saveIntruder: () => {
+                const q = parseFloat(document.getElementById('intruder-qty-input').value);
+                if(isNaN(q)) return;
+                const rec = {
+                    location: state.intruderData.ubi,
+                    material: state.intruderData.mat,
+                    qty: q,
+                    status: 'INTRUSO_UBI', doc: 'INTRUSO', diff: q, theoretical: 0
+                };
+                App.save(rec);
+                App.closeIntruder();
+                
+                if(state.originalLoc) {
+                    setTimeout(() => {
+                        document.getElementById('inp-location').value = state.originalLoc;
+                        document.getElementById('inp-material').focus();
+                        state.originalLoc = null;
+                    }, 500);
+                }
+            },
+            closeIntruder: () => {
+                document.getElementById('intruder-modal-overlay').style.display = 'none';
+            },
+
+            // UI
             clear: () => {
                 document.getElementById('inp-location').value = '';
                 document.getElementById('inp-material').value = '';
@@ -518,10 +577,16 @@
                 const m = document.getElementById('modal-msg');
                 const bBox = document.getElementById('modal-actions');
                 const box = document.getElementById('modal-box');
+                const icon = document.getElementById('modal-icon');
                 
                 t.innerText = title;
                 m.innerText = msg;
-                box.className = `modal-box ${theme}`;
+                box.className = `modal-box ${theme}-mode`;
+                
+                if(theme === 'success') icon.innerText = '✅';
+                else if(theme === 'error') icon.innerText = '⛔';
+                else icon.innerText = '⚠️';
+
                 bBox.innerHTML = '';
 
                 if(isOption) {
@@ -536,7 +601,10 @@
                     };
                     const b2 = document.createElement('button');
                     b2.className = 'modal-btn intruder'; b2.innerText = "REGISTRAR COMO INTRUSO";
-                    b2.onclick = () => { App.solveIntruder(ctx); el.style.display = 'none'; };
+                    b2.onclick = () => { 
+                        el.style.display = 'none'; 
+                        App.setupIntruder(null, ctx.mat); 
+                    };
                     const b3 = document.createElement('button');
                     b3.className = 'modal-btn cancel'; b3.innerText = "CANCELAR";
                     b3.onclick = () => el.style.display = 'none';
@@ -564,7 +632,6 @@
                 el.style.display = 'flex';
             },
             
-            // ADMIN
             updateStats: () => {
                 document.getElementById('stat-reads').innerText = state.reads;
                 document.getElementById('stat-writes').innerText = state.writes;
@@ -598,14 +665,17 @@
                     const s = summary.get(r.user); s.u++; s.q+=r.qty;
                 });
                 tbody.innerHTML = Array.from(summary.entries()).map(([u,d]) => `<tr><td>${u}</td><td>-</td><td>${d.u}</td><td>${d.q}</td></tr>`).join('');
+                
+                // Select de usuarios (Historial + Manual + Configs)
                 const sel = document.getElementById('cfg-user-select');
-                if(sel.options.length <= 0) {
-                    state.userConfigs.forEach((v, k) => {
-                       const opt = document.createElement('option');
-                       opt.value = k; opt.innerText = k.split('@')[0];
-                       sel.appendChild(opt);
-                    });
-                }
+                const allUsers = new Set();
+                state.records.forEach(r => allUsers.add(r.user.toLowerCase() + "@grupocargo.com"));
+                state.userConfigs.forEach((v, k) => allUsers.add(k));
+
+                // Guardar selección actual
+                const currentVal = sel.value;
+                sel.innerHTML = Array.from(allUsers).map(u => `<option value="${u}">${u.split('@')[0].toUpperCase()}</option>`).join('');
+                if(allUsers.has(currentVal)) sel.value = currentVal;
             },
             wipeDB: async () => {
                 if(!confirm("¿BORRAR TODO?")) return;
@@ -616,15 +686,21 @@
                 alert("Base limpia");
             },
             saveCfg: async () => {
-                const u = document.getElementById('cfg-user-select').value;
-                const z = document.getElementById('cfg-zone').value;
+                const sel = document.getElementById('cfg-user-select');
+                const manual = document.getElementById('cfg-user-manual');
+                let email = manual.value.trim() ? `${manual.value.trim().toLowerCase()}@grupocargo.com` : sel.value;
+                
+                const z = document.getElementById('cfg-zone').value.toUpperCase();
                 const s = document.getElementById('cfg-start').value;
                 const e = document.getElementById('cfg-end').value;
-                if(!u) return;
-                await setDoc(doc(db, "artifacts", APP_ID, "public", "data", "configs", u), {zone:z, start:parseInt(s), end:parseInt(e)});
-                alert("Guardado");
+                
+                if(!email) return alert("Seleccione o escriba un usuario");
+                
+                await setDoc(doc(db, "artifacts", APP_ID, "public", "data", "configs", email), {zone:z, start:parseInt(s), end:parseInt(e)});
+                alert("Guardado para: " + email);
+                manual.value = ''; // Limpiar manual
             },
-
+            
             // CAMERA
             scan: async (tgt) => {
                 state.scanTgt = tgt;
@@ -670,9 +746,12 @@
             }
         };
 
+        // --- GLOBAL BINDINGS ---
         window.app = App;
         window.delRec = (id) => deleteDoc(doc(db, "artifacts", APP_ID, "public", "data", "conteos", id));
+        document.getElementById('btn-save-intruder').onclick = App.saveIntruder;
 
+        // LISTENERS
         onAuthStateChanged(auth, u => {
             if(u) {
                 document.getElementById('login-screen').style.display = 'none';
@@ -706,6 +785,9 @@
                         App.renderConfig();
                     });
                 }
+
+            } else {
+                document.getElementById('login-screen').style.display = 'flex';
             }
         });
         
@@ -713,16 +795,17 @@
         document.getElementById('inp-material').onkeydown = e => { if(e.key==='Enter') document.getElementById('inp-qty').focus(); };
         document.getElementById('inp-qty').onkeydown = e => { if(e.key==='Enter') App.preSave(); };
 
+        // Swipe
         let tx=0;
         document.ontouchstart = e => tx = e.changedTouches[0].clientX;
         document.ontouchend = e => {
             const dx = tx - e.changedTouches[0].clientX;
             if(Math.abs(dx) > 100) {
-                const active = document.querySelector('.view.active').id;
-                if(dx > 0 && active === 'view-conteo') App.nav('historial');
-                if(dx < 0 && active === 'view-historial') App.nav('conteo');
+                if(dx > 0) App.nav('historial');
+                else App.nav('conteo');
             }
         }
+
     </script>
 </body>
 </html>
